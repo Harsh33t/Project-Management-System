@@ -1,0 +1,40 @@
+{
+  "projects": [
+    {
+      "id": "p1",
+      "title": "Nexus Product Launch",
+      "description": "Roll out v1 with content, onboarding, and QA.",
+      "status": "in-progress",
+      "deadline": "2026-05-10",
+      "tasks": [
+        {
+          "id": "t1",
+          "title": "Finalize onboarding copy",
+          "status": "todo",
+          "priority": "high",
+          "assignedUsers": [
+            "Pratham",
+            "Riya"
+          ]
+        }
+      ]
+    }
+  ],
+  "activity": [
+    {
+      "id": "a_1775846751274_8953",
+      "message": "Project \"Nexus\" deleted",
+      "timestamp": "2026-04-10T18:45:51.274Z"
+    },
+    {
+      "id": "a_1775846728647_5505",
+      "message": "Project \"Nexus\" created",
+      "timestamp": "2026-04-10T18:45:28.647Z"
+    },
+    {
+      "id": "a1",
+      "message": "Project Nexus Product Launch created",
+      "timestamp": "2026-04-10T18:43:22.689Z"
+    }
+  ]
+}

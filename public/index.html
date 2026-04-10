@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nexus PM System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="texture"></div>
+    <main class="layout">
+      <section class="hero card">
+        <p class="eyebrow">Nexus Team Assignment - Task 2</p>
+        <h1>Project Management System</h1>
+        <p class="sub">
+          Create projects, manage tasks, and keep a running trail of who changed what.
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>New Project</h2>
+        <form id="projectForm" class="form-grid">
+          <label>
+            Title
+            <input name="title" required />
+          </label>
+          <label>
+            Status
+            <select name="status" required>
+              <option value="planned">Planned</option>
+              <option value="in-progress">In Progress</option>
+              <option value="done">Done</option>
+            </select>
+          </label>
+          <label class="wide">
+            Description
+            <textarea name="description" rows="2"></textarea>
+          </label>
+          <label>
+            Deadline
+            <input type="date" name="deadline" />
+          </label>
+          <button type="submit">Create Project</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Projects</h2>
+        <div id="projects"></div>
+      </section>
+
+      <section class="card">
+        <h2>Activity Log</h2>
+        <ul id="activity" class="activity-list"></ul>
+      </section>
+    </main>
+
+    <template id="taskFormTemplate">
+      <form class="task-form">
+        <input name="title" placeholder="Task title" required />
+        <select name="status" required>
+          <option value="todo">To Do</option>
+          <option value="doing">Doing</option>
+          <option value="done">Done</option>
+        </select>
+        <select name="priority" required>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+        <input
+          name="assignedUsers"
+          placeholder="Assignees (comma separated)"
+          required
+        />
+        <button type="submit">Add Task</button>
+      </form>
+    </template>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
