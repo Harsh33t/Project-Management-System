@@ -9,7 +9,7 @@ async function getJson(url) {
   const [meta, projects] = await Promise.all([getJson("/api/meta"), getJson("/api/projects")]);
   const users = meta.users || [];
   const userSel = document.getElementById("currentUserSelect");
-  userSel.innerHTML = users.map((u) => `<option>${esc(u.name)}</option>`).join("");
+  userSel.innerHTML = `[ ` + esc(localStorage.getItem("nexus_user") || "PLAYER_1") + ` ]`;
 
   const tasks = projects.flatMap((p) => p.tasks || []);
   const totalProjects = projects.length;

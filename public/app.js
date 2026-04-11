@@ -171,8 +171,7 @@ async function load() {
   st.users = meta.users || [];
   st.projects = projects || [];
   const userSel = $("#currentUserSelect");
-  userSel.innerHTML = st.users.map((u) => `<option value="${u.name}">${esc(u.name)}</option>`).join("");
-  userSel.value = st.user;
+  userSel.innerHTML = `[ ` + esc(st.user || localStorage.getItem("nexus_user") || "PLAYER_1") + ` ]`;
   renderProjects();
 }
 

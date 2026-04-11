@@ -45,7 +45,7 @@ function render() {
   st.users = meta.users || [];
   st.projects = projects || [];
   st.rows = activity || [];
-  document.getElementById("currentUserSelect").innerHTML = st.users.map((u) => `<option>${esc(u.name)}</option>`).join("");
+  document.getElementById("currentUserSelect").innerHTML = `[ ` + esc(localStorage.getItem("nexus_user") || "PLAYER_1") + ` ]`;
   const f = document.getElementById("projectFilter");
   f.innerHTML = [`<option value="">ALL PROJECTS</option>`].concat(st.projects.map((p) => `<option value="${p.id}">${esc(p.title)}</option>`)).join("");
   f.addEventListener("change", () => {

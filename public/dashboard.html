@@ -22,7 +22,7 @@
           <a class="nav-link active" href="/dashboard.html">[DASHBOARD]</a>
           <a class="nav-link" href="/projects.html">[PROJECTS]</a>
           <a class="nav-link" href="/activity.html">[ACTIVITY]</a>
-          <select id="currentUserSelect"></select>
+          <div id="currentUserSelect" class="nav-link" style="border-color: var(--y); color: var(--y); text-shadow: var(--y-glow); pointer-events: none; padding: 6px 12px;"></div>
           <button id="logoutBtn" style="border-color:#ff3d3d;color:#ff8a8a;font-size:.65rem;padding:6px 12px" onclick="localStorage.removeItem('nexus_token');localStorage.removeItem('nexus_user');window.location.href='/login.html'">[LOGOUT]</button>
         </div>
       </div>
