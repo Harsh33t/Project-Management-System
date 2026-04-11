@@ -830,6 +830,46 @@ app.post("/api/projects/:projectId/tasks", (req, res) => {
   res.status(201).json(task);
 });
 
+app.get("/api/projects/:projectId/briefing", async (req, res) => {
+  const { projectId } = req.params;
+  const db = readDb();
+  const userName = getActor(req, db);
+  const project = db.projects.find((p) => p.id === projectId && (!p.owner || p.owner === userName));
+  
+  if (!project) return res.status(404).json({ error: "project not found" });
+
+  if (!GROQ_API_KEY) {
+    return res.json({ briefing: "[ COMMS OFFLINE ] Missing GROQ_API_KEY to connect to Command." });
+  }
+
+  const taskList = (project.tasks || []).map(t => `- [${(t.priority || "Normal").toUpperCase()}] ${t.title} (${t.status})`).join("\n");
+  const prompt = `You are an onboard military AI generating a 'Commander's Briefing' for a space mission.
+MISSION ALIAS: ${project.title}
+OBJECTIVE: ${project.description || "Classified operations"}
+STATUS: ${project.status}
+CURRENT DEPLOYMENTS (TASKS):
+${taskList || "No active deployments."}
+
+Generate a 2-3 sentence intense, immersive Briefing summarizing the state of the mission. Do not use Markdown formatting or lists. Keep it entirely in raw text. Speak like a tactical officer giving a quick sitrep.`;
+
+  try {
+    const aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_API_KEY}` },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 150, temperature: 0.7
+      })
+    });
+    const aiData = await aiRes.json();
+    const briefing = aiData.choices?.[0]?.message?.content || "[ COMMS OFFLINE ] Unable to decrypt signal.";
+    res.json({ briefing });
+  } catch (err) {
+    res.status(500).json({ error: "Internal Comm failure." });
+  }
+});
+
 app.put("/api/projects/:projectId/tasks/:taskId", (req, res) => {
   const { projectId, taskId } = req.params;
   const { title, status, priority, assignedUsers, dueDate, notes, completed } = req.body;

@@ -11,7 +11,12 @@
   <body>
     <nav class="navbar">
       <div class="navbar-inner">
-        <div class="logo">NEXUS PAM</div>
+        <div class="logo-wrapper" onclick="window.location.href='/index.html'" style="cursor: pointer; display: flex; align-items: center; gap: 8px; user-select: none;">
+          <span style="color: #00ff41; font-size: 1.25rem; text-shadow: 0 0 15px rgba(0,255,65,0.5);">NEXUS</span>
+          <span style="display: flex; align-items: center; gap: 4px; color: #fff; font-size: 1.25rem; text-shadow: 0 0 5px #fff;">
+            P<svg style="width: 1.2rem; height: 1.2rem; filter: drop-shadow(0 0 5px rgba(0,255,65,0.5));" viewBox="0 0 16 16"><rect x="7" y="0" width="2" height="4" fill="#ffffff"></rect><rect x="6" y="4" width="4" height="6" fill="#00ff41"></rect><rect x="4" y="6" width="8" height="4" fill="#00ff41"></rect><rect x="2" y="10" width="12" height="2" fill="#008f11"></rect><rect x="0" y="12" width="4" height="4" fill="#ff0055"></rect><rect x="12" y="12" width="4" height="4" fill="#ff0055"></rect></svg>M
+          </span>
+        </div>
         <div class="nav-right">
           <a class="nav-link" href="/index.html">[HOME]</a>
           <a class="nav-link" href="/dashboard.html">[DASHBOARD]</a>
@@ -39,5 +44,7 @@
     <script src="/activity.js"></script>
     <script src="/chatbot.js"></script>
     <script src="/dotted-surface.js"></script>
+  <footer class="system-footer"><span>[ OXYGEN: 98% ]</span><span>[ SHIELDS: ACTIVE ]</span><span class="blink">_ UPTIME: OK _</span></footer>
+  <script src="/dotted-surface.js"></script>
 </body>
 </html>
