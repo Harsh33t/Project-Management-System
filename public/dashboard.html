@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nexus Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="navbar-inner">
+        <div class="logo">NEXUS PAM</div>
+        <div class="nav-right">
+          <a class="nav-link" href="/">[HOME]</a>
+          <a class="nav-link active" href="/dashboard.html">[DASHBOARD]</a>
+          <a class="nav-link" href="/projects.html">[PROJECTS]</a>
+          <a class="nav-link" href="/activity.html">[ACTIVITY]</a>
+          <select id="currentUserSelect"></select>
+        </div>
+      </div>
+    </nav>
+
+    <main class="page-root">
+      <div class="content-wrap">
+        <section class="panel">
+          <h1 class="page-title">▸ MISSION STATS</h1>
+          <div id="stats" class="stats-grid"></div>
+        </section>
+
+        <section class="panel">
+          <h2 class="page-title">▸ TASK BREAKDOWN</h2>
+          <div id="bars" class="status-list"></div>
+          <div id="dashEmpty" class="empty-state" style="display:none">[ NO MISSIONS ACTIVE ] <span class="blink">_</span></div>
+        </section>
+      </div>
+    </main>
+    <script src="/dashboard.js"></script>
+  </body>
+</html>

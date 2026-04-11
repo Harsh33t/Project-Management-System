@@ -1,40 +1,112 @@
 {
   "projects": [
     {
-      "id": "p1",
-      "title": "Nexus Product Launch",
-      "description": "Roll out v1 with content, onboarding, and QA.",
-      "status": "in-progress",
-      "deadline": "2026-05-10",
-      "tasks": [
+      "createdAt": "2026-04-11T03:34:54.015Z",
+      "attachments": [
         {
-          "id": "t1",
-          "title": "Finalize onboarding copy",
-          "status": "todo",
-          "priority": "high",
-          "assignedUsers": [
-            "Pratham",
-            "Riya"
-          ]
+          "id": "f_1775877645136_3004",
+          "filename": "1775877644910_group_05.pdf",
+          "originalName": "group_05.pdf",
+          "category": "excel",
+          "size": 6610628,
+          "uploadedAt": "2026-04-11T03:20:45.136Z",
+          "url": "/uploads/1775877644910_group_05.pdf"
         }
-      ]
+      ],
+      "tasks": [],
+      "id": "p_1775877153905_1961",
+      "title": "Python mid sem",
+      "description": "have to study for python midsem",
+      "status": "planned",
+      "deadline": "2026-04-11"
     }
   ],
   "activity": [
     {
+      "action": "edited",
+      "userName": "PLAYER_1",
+      "projectId": "p_1775877153905_1961",
+      "id": "a_1775880061812_6546",
+      "message": "Project \"Python mid sem\" edited",
+      "timestamp": "2026-04-11T04:01:01.812Z"
+    },
+    {
+      "action": "edited",
+      "userName": "PLAYER_1",
+      "projectId": "",
+      "id": "a_1775877645136_378",
+      "message": "File \"group_05.pdf\" uploaded to \"Python mid sem\"",
+      "timestamp": "2026-04-11T03:20:45.136Z"
+    },
+    {
+      "action": "edited",
+      "userName": "PLAYER_1",
+      "projectId": "",
+      "id": "a_1775877167561_2052",
+      "message": "Project \"Nexus Product Launch\" deleted",
+      "timestamp": "2026-04-11T03:12:47.561Z"
+    },
+    {
+      "action": "edited",
+      "userName": "PLAYER_1",
+      "projectId": "",
+      "id": "a_1775877160940_2274",
+      "message": "Task \"Finalize onboarding copy\" deleted from \"Nexus Product Launch\"",
+      "timestamp": "2026-04-11T03:12:40.940Z"
+    },
+    {
+      "action": "edited",
+      "userName": "PLAYER_1",
+      "projectId": "",
+      "id": "a_1775877153906_9686",
+      "message": "Project \"Python mid sem\" created",
+      "timestamp": "2026-04-11T03:12:33.906Z"
+    },
+    {
+      "action": "edited",
+      "userName": "PLAYER_1",
+      "projectId": "",
       "id": "a_1775846751274_8953",
       "message": "Project \"Nexus\" deleted",
       "timestamp": "2026-04-10T18:45:51.274Z"
     },
     {
+      "action": "edited",
+      "userName": "PLAYER_1",
+      "projectId": "",
       "id": "a_1775846728647_5505",
       "message": "Project \"Nexus\" created",
       "timestamp": "2026-04-10T18:45:28.647Z"
     },
     {
+      "action": "edited",
+      "userName": "PLAYER_1",
+      "projectId": "",
       "id": "a1",
       "message": "Project Nexus Product Launch created",
       "timestamp": "2026-04-10T18:43:22.689Z"
+    }
+  ],
+  "users": [
+    {
+      "id": "u1",
+      "name": "PLAYER_1",
+      "color": "#00ff41"
+    },
+    {
+      "id": "u2",
+      "name": "NOVA",
+      "color": "#ff0055"
+    },
+    {
+      "id": "u3",
+      "name": "BYTE",
+      "color": "#00d9ff"
+    },
+    {
+      "id": "u4",
+      "name": "PIXEL",
+      "color": "#ffd23f"
     }
   ]
 }

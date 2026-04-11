@@ -3,86 +3,69 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nexus PM System</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Space+Grotesk:wght@400;500;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="/styles.css" />
+    <title>Nexus PAM Home</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
   </head>
   <body>
-    <div class="texture"></div>
-    <main class="layout">
-      <section class="hero card">
-        <p class="eyebrow">Nexus Team Assignment - Task 2</p>
-        <h1>Project Management System</h1>
-        <p class="sub">
-          Create projects, manage tasks, and keep a running trail of who changed what.
-        </p>
-      </section>
+    <div class="relative min-h-screen w-full bg-[#050505] text-white overflow-hidden flex flex-col uppercase tracking-widest font-['Press_Start_2P',_cursive] text-[10px]">
+      <style>
+        @keyframes move-stars { from { transform: translateY(0); } to { transform: translateY(-1000px); } }
+        @keyframes float-ship { 0%,100% { transform: translateY(0) rotate(0deg);} 50% { transform: translateY(-15px) rotate(2deg);} }
+        @keyframes blink { 50% { opacity: 0; } }
+        @keyframes enemy-wiggle { from { transform: translateX(-15px);} to { transform: translateX(15px);} }
+        .stars-bg { background: transparent; box-shadow: 240px 10px #FFF, 400px 150px #FFF, 600px 400px #FFF, 800px 100px #FFF, 1200px 700px #FFF, 100px 800px #FFF, 1100px 300px #FFF; animation: move-stars 80s linear infinite; }
+        .hud-scanline { background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.2) 50%), linear-gradient(90deg, rgba(255,0,0,0.05), rgba(0,255,0,0.02), rgba(0,0,255,0.05)); background-size: 100% 4px, 3px 100%; }
+      </style>
 
-      <section class="card">
-        <h2>New Project</h2>
-        <form id="projectForm" class="form-grid">
-          <label>
-            Title
-            <input name="title" required />
-          </label>
-          <label>
-            Status
-            <select name="status" required>
-              <option value="planned">Planned</option>
-              <option value="in-progress">In Progress</option>
-              <option value="done">Done</option>
-            </select>
-          </label>
-          <label class="wide">
-            Description
-            <textarea name="description" rows="2"></textarea>
-          </label>
-          <label>
-            Deadline
-            <input type="date" name="deadline" />
-          </label>
-          <button type="submit">Create Project</button>
-        </form>
-      </section>
+      <div class="absolute inset-0 z-0">
+        <div class="stars-bg absolute w-1 h-1"></div>
+        <div class="stars-bg absolute w-[2px] h-[2px] opacity-50" style="animation-duration: 120s; left: 10%"></div>
+        <div class="absolute inset-0 hud-scanline pointer-events-none z-50"></div>
+      </div>
 
-      <section class="card">
-        <h2>Projects</h2>
-        <div id="projects"></div>
-      </section>
+      <nav class="relative z-40 w-full p-6 md:p-10 flex justify-between items-start">
+        <div class="flex flex-col gap-3">
+          <div class="text-[#00ff41]">SCORE: <span class="text-white">040892</span></div>
+          <div class="text-[#ff0055]">LIVES: <span class="text-white">♥♥♥</span></div>
+        </div>
+        <div class="text-center">
+          <div class="text-amber-400 mb-2">STAGE 01</div>
+          <div class="text-[8px] animate-[blink_1s_step-end_infinite] text-white/80">INSERT COIN</div>
+        </div>
+        <div class="hidden md:flex flex-col items-end gap-3">
+          <div class="text-white/60">HI-SCORE: 99999</div>
+        </div>
+      </nav>
 
-      <section class="card">
-        <h2>Activity Log</h2>
-        <ul id="activity" class="activity-list"></ul>
-      </section>
-    </main>
+      <main class="relative z-20 flex-grow flex flex-col items-center justify-center px-6">
+        <div class="mb-16 animate-[enemy-wiggle_2s_ease-in-out_infinite_alternate]">
+          <svg width="80" height="54" viewBox="0 0 15 10" fill="#ff0055" class="drop-shadow-[0_0_8px_rgba(255,0,85,0.6)]">
+            <rect x="4" y="0" width="7" height="1"></rect><rect x="3" y="1" width="9" height="1"></rect><rect x="2" y="2" width="11" height="1"></rect><rect x="2" y="3" width="2" height="1"></rect><rect x="5" y="3" width="5" height="1"></rect><rect x="11" y="3" width="2" height="1"></rect><rect x="0" y="4" width="15" height="1"></rect><rect x="2" y="5" width="2" height="1"></rect><rect x="5" y="5" width="5" height="1"></rect><rect x="11" y="5" width="2" height="1"></rect>
+          </svg>
+        </div>
 
-    <template id="taskFormTemplate">
-      <form class="task-form">
-        <input name="title" placeholder="Task title" required />
-        <select name="status" required>
-          <option value="todo">To Do</option>
-          <option value="doing">Doing</option>
-          <option value="done">Done</option>
-        </select>
-        <select name="priority" required>
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-        </select>
-        <input
-          name="assignedUsers"
-          placeholder="Assignees (comma separated)"
-          required
-        />
-        <button type="submit">Add Task</button>
-      </form>
-    </template>
+        <h1 class="text-[14vw] md:text-[10vw] leading-none text-white text-center flex flex-col items-center select-none">
+          <span class="text-[#00ff41] drop-shadow-[0_0_15px_rgba(0,255,65,0.3)]">nexus</span>
+          <div class="flex items-center -mt-2 md:-mt-6">
+            <span>p</span>
+            <div class="w-[12vw] h-[12vw] md:w-[8vw] md:h-[8vw] mx-2 md:mx-4 animate-[float-ship_3s_ease-in-out_infinite]">
+              <svg viewBox="0 0 16 16" class="w-full h-full drop-shadow-[0_0_12px_rgba(0,255,65,0.5)]">
+                <rect x="7" y="0" width="2" height="4" fill="#ffffff"></rect><rect x="6" y="4" width="4" height="6" fill="#00ff41"></rect><rect x="4" y="6" width="8" height="4" fill="#00ff41"></rect><rect x="2" y="10" width="12" height="2" fill="#008f11"></rect><rect x="0" y="12" width="4" height="4" fill="#ff0055"></rect><rect x="12" y="12" width="4" height="4" fill="#ff0055"></rect><rect x="7" y="10" width="2" height="6" fill="#00ff41"></rect>
+              </svg>
+            </div>
+            <span>m</span>
+          </div>
+        </h1>
 
-    <script src="/app.js"></script>
+        <div class="mt-12 flex flex-wrap gap-3 justify-center">
+          <a href="/" class="border border-white/40 px-4 py-2 text-white hover:bg-white/10">[HOME]</a>
+          <a href="/dashboard.html" class="border border-[#00ff41] px-4 py-2 text-[#00ff41] hover:bg-[#00ff41]/15">[DASHBOARD]</a>
+          <a href="/projects.html" class="border border-amber-400 px-4 py-2 text-amber-400 hover:bg-amber-400/15">[PROJECTS]</a>
+          <a href="/activity.html" class="border border-[#ff0055] px-4 py-2 text-[#ff73a2] hover:bg-[#ff0055]/15">[ACTIVITY]</a>
+        </div>
+
+      </main>
+    </div>
   </body>
 </html>

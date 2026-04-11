@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Component Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      height: 100%;
+      overflow: auto;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #000000;
+      color: #ffffff;
+    }
+    .component-wrapper {
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      box-sizing: border-box;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="component-wrapper">
+    <html><head></head><body><div class="relative min-h-screen w-full bg-[#050505] text-white overflow-hidden flex flex-col uppercase tracking-widest font-['Press_Start_2P',_cursive] text-[10px]">
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;display=swap" rel="stylesheet">
+
+  <style>
+    @keyframes move-stars {
+      from {
+        transform: translateY(0);
+      }
+
+      to {
+        transform: translateY(-1000px);
+      }
+    }
+
+    @keyframes float-ship {
+
+      0%,
+      100% {
+        transform: translateY(0) rotate(0deg);
+      }
+
+      50% {
+        transform: translateY(-15px) rotate(2deg);
+      }
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    @keyframes enemy-wiggle {
+      from {
+        transform: translateX(-15px);
+      }
+
+      to {
+        transform: translateX(15px);
+      }
+    }
+
+    .stars-bg {
+      background: transparent;
+      box-shadow: 240px 10px #FFF, 400px 150px #FFF, 600px 400px #FFF, 800px 100px #FFF, 1200px 700px #FFF, 100px 800px #FFF, 1100px 300px #FFF;
+      animation: move-stars 80s linear infinite;
+    }
+
+    .hud-scanline {
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.05), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.05));
+      background-size: 100% 4px, 3px 100%;
+    }
+  </style>
+
+  <!-- Background Layer -->
+  <div class="absolute inset-0 z-0">
+    <div class="stars-bg absolute w-1 h-1"></div>
+    <div class="stars-bg absolute w-[2px] h-[2px] opacity-50" style="animation-duration: 120s; left: 10%;"></div>
+    <div class="absolute inset-0 hud-scanline pointer-events-none z-50"></div>
+  </div>
+
+  <!-- HUD Navigation -->
+  <nav class="relative z-40 w-full p-6 md:p-10 flex justify-between items-start">
+    <div class="flex flex-col gap-3">
+      <div class="text-[#00ff41]">SCORE: <span class="text-white">040892</span></div>
+      <div class="text-[#ff0055] flex gap-1">LIVES: <span class="text-white">❤❤❤</span></div>
+    </div>
+    <div class="text-center">
+      <div class="text-amber-400 mb-2">STAGE 01</div>
+      <div class="text-[8px] animate-[blink_1s_step-end_infinite] text-white/80">INSERT COIN</div>
+    </div>
+    <div class="hidden md:flex flex-col items-end gap-3">
+      <div class="text-white/60">HI-SCORE: 99999</div>
+      <button class="w-10 h-10 bg-white/5 border-2 border-white/20 flex items-center justify-center hover:bg-white/10 transition-colors">
+        <div class="w-5 h-0.5 bg-white"></div>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Combat Zone -->
+  <main class="relative z-20 flex-grow flex flex-col items-center justify-center px-6">
+    <!-- Enemy Unit -->
+    <div class="mb-16 animate-[enemy-wiggle_2s_ease-in-out_infinite_alternate]">
+      <svg width="80" height="54" viewBox="0 0 15 10" fill="#ff0055" class="drop-shadow-[0_0_8px_rgba(255,0,85,0.6)]">
+        <rect x="4" y="0" width="7" height="1"></rect>
+        <rect x="3" y="1" width="9" height="1"></rect>
+        <rect x="2" y="2" width="11" height="1"></rect>
+        <rect x="2" y="3" width="2" height="1"></rect>
+        <rect x="5" y="3" width="5" height="1"></rect>
+        <rect x="11" y="3" width="2" height="1"></rect>
+        <rect x="0" y="4" width="15" height="1"></rect>
+        <rect x="2" y="5" width="2" height="1"></rect>
+        <rect x="5" y="5" width="5" height="1"></rect>
+        <rect x="11" y="5" width="2" height="1"></rect>
+      </svg>
+    </div>
+
+    <!-- Hero Title -->
+    <h1 class="text-[14vw] md:text-[10vw] leading-none text-white text-center flex flex-col items-center select-none">
+      <span class="text-[#00ff41] drop-shadow-[0_0_15px_rgba(0,255,65,0.3)]">jin</span>
+      <div class="flex items-center -mt-2 md:-mt-6">
+        <span>w</span>
+        <div class="w-[12vw] h-[12vw] md:w-[8vw] md:h-[8vw] mx-2 md:mx-4 animate-[float-ship_3s_ease-in-out_infinite]">
+          <svg viewBox="0 0 16 16" class="w-full h-full drop-shadow-[0_0_12px_rgba(0,255,65,0.5)]">
+            <rect x="7" y="0" width="2" height="4" fill="#ffffff"></rect>
+            <rect x="6" y="4" width="4" height="6" fill="#00ff41"></rect>
+            <rect x="4" y="6" width="8" height="4" fill="#00ff41"></rect>
+            <rect x="2" y="10" width="12" height="2" fill="#008f11"></rect>
+            <rect x="0" y="12" width="4" height="4" fill="#ff0055"></rect>
+            <rect x="12" y="12" width="4" height="4" fill="#ff0055"></rect>
+            <rect x="7" y="10" width="2" height="6" fill="#00ff41"></rect>
+          </svg>
+        </div>
+        <span>o</span>
+      </div>
+    </h1>
+
+    <div class="mt-16 text-[10px] md:text-xs text-amber-500 flex items-center gap-4 border border-amber-500/30 px-4 py-2 bg-amber-500/5">
+      <span class="opacity-40 animate-pulse">&gt;&gt;</span>
+      SECTOR: SEOUL_BASE_SQ
+      <span class="opacity-40 animate-pulse">&lt;&lt;</span>
+    </div>
+  </main>
+
+  <!-- Systems Footer -->
+  <footer class="relative z-30 w-full p-6 md:p-10 flex flex-col gap-8 bg-gradient-to-t from-black/80 to-transparent">
+    <div class="flex flex-col md:flex-row justify-between gap-4 border-t border-white/10 pt-8">
+      <div class="flex flex-wrap gap-6">
+        <span class="text-white/40">ENGINE: <span class="text-[#00ff41]">NOMINAL</span></span>
+        <span class="text-white/40">SHIELDS: <span class="text-[#00ff41]">88%</span></span>
+        <span class="text-white/40">O2: <span class="text-[#00ff41]">MAX</span></span>
+      </div>
+      <div class="text-white/40">PILOT_ID: JINWOO_ALPHA</div>
+    </div>
+
+    <div class="flex flex-col md:flex-row justify-between items-center md:items-end gap-6">
+      <div class="flex gap-8 text-[#00ff41]">
+        <a href="#" class="hover:text-white transition-colors underline decoration-dotted underline-offset-4">[GITHUB]</a>
+        <a href="#" class="hover:text-white transition-colors underline decoration-dotted underline-offset-4">[LINKEDIN]</a>
+        <a href="#" class="hover:text-white transition-colors underline decoration-dotted underline-offset-4">[X]</a>
+      </div>
+      <div class="flex flex-col items-center md:items-end gap-3">
+        <div class="text-white/20 text-[8px]">© 1994 JINWOO SOFT INC.</div>
+        <div class="w-48 h-1.5 bg-white/10 overflow-hidden">
+          <div class="w-3/4 h-full bg-[#00ff41] shadow-[0_0_8px_#00ff41]"></div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Random Particles -->
+  <div class="absolute inset-0 z-10 pointer-events-none opacity-30">
+    <div class="absolute top-[20%] left-[15%] w-0.5 h-6 bg-[#00ff41] animate-pulse"></div>
+    <div class="absolute bottom-[35%] right-[20%] w-0.5 h-4 bg-[#ff0055]"></div>
+    <div class="absolute top-[50%] right-[10%] w-1 h-1 bg-white"></div>
+  </div>
+</div></body></html>
+  </div>
+  
+    <script>
+      (function() {
+        function checkAndCenter() {
+          // Use double requestAnimationFrame to ensure DOM is fully painted and layout is stable
+          requestAnimationFrame(function() {
+            requestAnimationFrame(function() {
+              const wrapper = document.querySelector('.component-wrapper');
+              if (!wrapper) return;
+              
+              // Get all child elements
+              const children = Array.from(wrapper.children);
+              if (children.length === 0) return;
+              
+              // Temporarily override wrapper styles to shrink-wrap for measurement
+              // Set inline styles to shrink-wrap (inline styles override CSS)
+              wrapper.style.display = 'inline-block';
+              wrapper.style.width = 'auto';
+              wrapper.style.height = 'auto';
+              wrapper.style.overflow = 'visible';
+              wrapper.style.boxSizing = 'content-box';
+              
+              // Force multiple reflows to ensure styles are fully applied
+              void wrapper.offsetHeight;
+              void wrapper.offsetWidth;
+              void wrapper.offsetHeight;
+              
+              // Measure the wrapper's content size
+              const contentWidth = wrapper.offsetWidth;
+              const contentHeight = wrapper.offsetHeight;
+              
+              // Restore original styles by removing inline styles we added
+              wrapper.style.removeProperty('display');
+              wrapper.style.removeProperty('width');
+              wrapper.style.removeProperty('height');
+              wrapper.style.removeProperty('overflow');
+              wrapper.style.removeProperty('box-sizing');
+              
+              // If content is less than 500x500, center it
+              if (contentWidth > 0 && contentHeight > 0 && contentWidth < 500 && contentHeight < 500) {
+                wrapper.style.display = 'flex';
+                wrapper.style.alignItems = 'center';
+                wrapper.style.justifyContent = 'center';
+              }
+            });
+          });
+        }
+        
+        // Check immediately and after delays to ensure content is rendered and styled
+        function runChecks() {
+          checkAndCenter();
+          setTimeout(checkAndCenter, 50);
+          setTimeout(checkAndCenter, 150);
+          setTimeout(checkAndCenter, 300);
+          setTimeout(checkAndCenter, 500);
+          setTimeout(checkAndCenter, 1000);
+        }
+        
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', runChecks);
+        } else {
+          runChecks();
+        }
+        
+        // Also check when images or other resources load
+        window.addEventListener('load', () => {
+          setTimeout(checkAndCenter, 100);
+          setTimeout(checkAndCenter, 300);
+        });
+        
+        // Use ResizeObserver to detect size changes
+        if (window.ResizeObserver) {
+          setTimeout(() => {
+            const wrapper = document.querySelector('.component-wrapper');
+            if (wrapper) {
+              const observer = new ResizeObserver(() => {
+                setTimeout(checkAndCenter, 50);
+              });
+              observer.observe(wrapper);
+            }
+          }, 500);
+        }
+      })();
+    </script>
+  
+</body>
+</html>
