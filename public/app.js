@@ -48,27 +48,34 @@ function assigneeToggles(projectId) {
     .join("")}</div>`;
 }
 function taskCard(projectId, t) {
-  const pcls = t.priority === "high" ? "priority-high" : t.priority === "medium" ? "priority-medium" : "priority-low";
-  return `<article class="task-card" data-task-id="${t.id}">
-    <div class="heading-row">
-      <div class="task-title">${esc(t.title)}</div>
-      <span class="priority-badge ${pcls}">[${esc((t.priority || "low").toUpperCase())}]</span>
+  const priClass = t.priority === "high" ? "pri-high" : t.priority === "medium" ? "pri-medium" : "pri-low";
+  const priLabel = t.priority === "high" ? "CRITICAL" : t.priority === "medium" ? "HIGH" : "STABLE";
+  const statusIcon = t.completed || t.status === "done" ? "status-done" : t.status === "in-progress" ? "status-in-progress" : "status-todo";
+  
+  return `<div class="log-entry" data-task-id="${t.id}" title="MISSION NOTES: ${esc(t.notes || 'None')}">
+    <div class="log-status-bullet ${statusIcon}"></div>
+    <div style="flex:1; font-family:'VT323'; font-size:1.1rem;">
+      <span style="color:rgba(255,255,255,0.9)">${esc(t.title)}</span>
+      <span style="color:rgba(255,255,255,0.4); font-size:0.8rem; margin-left:10px;">[ ${t.dueDate || 'NO_DEADLINE'} ]</span>
     </div>
-    <div class="avatars">${(t.assignedUsers || [])
-      .map((uid) => {
-        const u = userById(uid);
-        if (!u) return "";
-        return `<span class="avatar" style="border-color:${u.color};color:${u.color}">${esc(u.name.slice(0, 2))}</span>`;
-      })
-      .join("")}</div>
-    <div class="task-meta">
-      <span>${t.dueDate ? esc(t.dueDate) : "NO DATE"}</span>
-      <div class="task-ops">
-        <button class="task-op" data-done-task="${projectId}:${t.id}">✓ DONE</button>
-        <button class="task-op btn-danger" data-delete-task="${projectId}:${t.id}">✕ DELETE</button>
-      </div>
+    <div class="log-priority ${priClass}">${priLabel}</div>
+    <div class="task-ops" style="display:flex; gap:5px;">
+      <button class="task-op" style="padding:2px 8px; border-color:var(--g); color:var(--g); font-size:0.6rem;" data-done-task="${projectId}:${t.id}">✓</button>
+      <button class="task-op btn-danger" style="padding:2px 8px; font-size:0.6rem;" data-delete-task="${projectId}:${t.id}">✕</button>
     </div>
-  </article>`;
+  </div>`;
+}
+
+async function requestBriefing(projectId) {
+  const briefingBox = $(`#briefing_${projectId}`);
+  briefingBox.innerHTML = `<b>COMMANDER'S BRIEFING</b> DECIPHERING SIGNAL... <span class="blink">_</span>`;
+  briefingBox.style.display = "block";
+  try {
+    const data = await api(`/api/projects/${projectId}/briefing`);
+    briefingBox.innerHTML = `<b>COMMANDER'S BRIEFING</b> ${esc(data.briefing)}`;
+  } catch (err) {
+    briefingBox.innerHTML = `<b>COMMANDER'S BRIEFING</b> [ ERROR ] COMM LINK FAILURE.`;
+  }
 }
 
 function renderProjects() {
@@ -85,65 +92,70 @@ function renderProjects() {
     .map((p) => {
       const pg = progress(p);
       const tasks = p.tasks || [];
-      const todo = tasks.filter((t) => t.status === "todo").map((t) => taskCard(p.id, t)).join("");
-      const doing = tasks.filter((t) => t.status === "in-progress").map((t) => taskCard(p.id, t)).join("");
-      const done = tasks.filter((t) => t.status === "done" || t.completed).map((t) => taskCard(p.id, t)).join("");
+      const taskEntries = tasks.map((t) => taskCard(p.id, t)).join("");
+      
       return `<article class="project-card">
-        <div class="project-top">
-          <h3 class="project-title">${esc(p.title)}</h3>
-          <div class="badge-row">${statusBadge(p)}<span class="badge">${esc(p.deadline || "NO DATE")}</span></div>
+        <div class="folder-tab">MISSION: ${esc(p.title)}</div>
+        <div class="project-header-row">
+          <div><span class="project-id-tag">ID_${p.id.slice(-4).toUpperCase()}</span> <span class="project-title" style="font-size:1.2rem; filter:drop-shadow(var(--g-glow));">${esc(p.title)}</span></div>
+          <div class="badge-row">${statusBadge(p)} <span class="badge" style="border-color:var(--y); color:var(--y);">${esc(p.deadline || "INF")}</span></div>
         </div>
-        <p class="project-desc">${esc(p.description || "")}</p>
-        <div>
-          <div class="project-progress-wrap"><div class="project-progress-fill" style="width:${pg}%"></div></div>
-          <div class="section-label">${pg}% COMPLETE</div>
-        </div>
-        <hr class="divider"/>
 
-        <form class="file-row" data-upload-form="${p.id}">
-          <select name="category"><option value="excel">EXCEL</option><option value="pdf">PDF</option><option value="word">WORD</option><option value="rar">RAR</option></select>
-          <div>
-            <input class="file-input-hidden" id="file_${p.id}" name="file" type="file" accept=".xlsx,.xls,.pdf,.doc,.docx,.rar" required />
-            <label class="btn" for="file_${p.id}">CHOOSE FILE</label>
-            <span class="file-display" id="fname_${p.id}">NO FILE</span>
+        <div style="padding: 0 20px;">
+          <p class="project-desc" style="font-family:'VT323'; font-size:1.2rem; color:rgba(0,255,65,0.7); margin-top:15px;">${esc(p.description || "NO MISSION OBJECTIVE DEFINED.")}</p>
+          
+          <div style="margin: 20px 0;">
+             <div style="display:flex; justify-content:space-between; font-family:'Press Start 2P'; font-size:0.6rem; color:var(--g);">
+               <span>MISSION PROGRESS</span>
+               <span>${pg}%</span>
+             </div>
+             <div class="health-bar-container"><div class="health-bar-fill" style="width:${pg}%"></div></div>
           </div>
-          <button>UPLOAD</button>
-        </form>
-        <div class="tags-wrap">${(p.attachments || [])
-          .map((f) => `<span class="file-tag">${esc(f.originalName)} <button data-preview-file="${p.id}:${f.id}">PREVIEW</button></span>`)
-          .join("")}</div>
-
-        <div class="action-row">
-          <button data-edit-project="${p.id}">EDIT</button>
-          <button class="btn-danger" data-delete-project="${p.id}">DELETE</button>
-          <button data-export-project="${p.id}:json">EXPORT JSON</button>
-          <button data-export-project="${p.id}:csv">EXPORT CSV</button>
         </div>
-        <hr class="divider"/>
 
-        <div style="margin: 10px 0;">
-          <button data-task-toggle="${p.id}" style="width:100%; padding:10px; border:1px dashed #00ff41; background:rgba(0,255,65,0.05); color:#00ff41; font-family:inherit; cursor:pointer; font-size:0.75rem;">+ ADD NEW TASK</button>
+        <div id="briefing_${p.id}" class="briefing-box" style="display:none"></div>
+
+        <div class="combat-log">
+          <div style="font-family:'Press Start 2P'; font-size:0.6rem; color:var(--y); margin-bottom:10px; border-bottom:1px solid var(--y); padding-bottom:4px;">[ COMBAT_LOG ]</div>
+          ${taskEntries || `<div class="empty-state" style="font-family:'VT323';">[ NO OPERATIONS LOGGED ]</div>`}
         </div>
-        <form id="task_form_${p.id}" class="task-form-body" style="display:none" data-task-form="${p.id}">
+
+        <div style="padding: 10px 20px;">
+          <button data-task-toggle="${p.id}" style="width:100%; padding:10px; border:1px dashed var(--g); background:rgba(0,255,65,0.05); color:var(--g); font-family:inherit; cursor:pointer; font-size:0.75rem;">+ INITIALIZE NEW OPERATION</button>
+        </div>
+
+        <form id="task_form_${p.id}" class="task-form-body" style="display:none; padding:15px 20px; background:rgba(0,0,0,0.5); border:1px solid var(--g-dim);" data-task-form="${p.id}">
           <div class="task-row-1">
-            <input name="title" placeholder="TASK TITLE" required />
-            <select name="priority"><option value="low">LOW</option><option value="medium">MEDIUM</option><option value="high">HIGH</option></select>
+            <input name="title" placeholder="OPERATION CODENAME" required />
+            <select name="priority"><option value="low">STABLE</option><option value="medium">HIGH</option><option value="high">CRITICAL</option></select>
           </div>
           <div class="task-row-2">
             <input type="date" name="dueDate" />
             ${assigneeToggles(p.id)}
           </div>
           <div class="task-row-3">
-            <textarea name="notes" rows="3" placeholder="TASK NOTES"></textarea>
-            <button class="right">ADD TASK</button>
+            <textarea name="notes" rows="2" placeholder="SITREP DETAILS"></textarea>
+            <button class="right">START OP</button>
           </div>
         </form>
 
-        <div class="kanban">
-          <section class="kan-col" data-status-col="${p.id}:todo"><div class="kan-head kan-todo">TODO</div>${todo || `<div class="empty-state">[ NO TASKS ]</div>`}</section>
-          <section class="kan-col" data-status-col="${p.id}:in-progress"><div class="kan-head kan-progress">IN PROGRESS</div>${doing || `<div class="empty-state">[ NO TASKS ]</div>`}</section>
-          <section class="kan-col" data-status-col="${p.id}:done"><div class="kan-head kan-done">DONE</div>${done || `<div class="empty-state">[ NO TASKS ]</div>`}</section>
+        <div class="action-row" style="padding:15px 20px; border-top:1px solid var(--g-dim); background:rgba(0,0,0,0.2); display:flex; flex-wrap:wrap; gap:10px;">
+          <button style="border-color:var(--c); color:var(--c);" onclick="requestBriefing('${p.id}')">REQUEST BRIEFING</button>
+          <button data-edit-project="${p.id}">MODIFY</button>
+          <button class="btn-danger" data-delete-project="${p.id}">ABORT</button>
+          <button style="font-size:0.6rem;" data-export-project="${p.id}:json">EXP_JSON</button>
+          <button style="font-size:0.6rem;" data-export-project="${p.id}:csv">EXP_CSV</button>
+          
+          <form class="file-row" data-upload-form="${p.id}" style="margin-left:auto; display:flex; gap:5px; border:none; padding:0;">
+             <input class="file-input-hidden" id="file_${p.id}" name="file" type="file" required />
+             <label class="btn" style="padding:4px 8px; font-size:0.6rem;" for="file_${p.id}">FILE</label>
+             <button style="padding:4px 8px; font-size:0.6rem;">UPLOAD</button>
+          </form>
         </div>
+
+        <div class="tags-wrap" style="padding:0 20px 15px;">${(p.attachments || [])
+          .map((f) => `<span class="file-tag" style="font-size:0.7rem;">${esc(f.originalName)} <button style="font-size:0.6rem;" data-preview-file="${p.id}:${f.id}">VIEW</button></span>`)
+          .join("")}</div>
       </article>`;
     })
     .join("");

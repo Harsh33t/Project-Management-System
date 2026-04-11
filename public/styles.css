@@ -1,11 +1,16 @@
 :root {
   --bg: #000;
   --g: #00ff41;
+  --g-dim: #003b0f;
   --c: #00d9ff;
   --y: #ffd700;
   --m: #ff4fd8;
   --r: #ff3d3d;
+  --g-glow: 0 0 10px rgba(0, 255, 65, 0.5);
+  --y-glow: 0 0 10px rgba(255, 215, 0, 0.4);
 }
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
 
 * {
   box-sizing: border-box;
@@ -17,8 +22,12 @@ body {
   min-height: 100%;
   background: var(--bg);
   color: var(--g);
+  font-family: "VT323", "Press Start 2P", monospace;
+  font-size: 1rem;
+}
+
+h1, h2, h3, .logo-wrapper, .nav-link {
   font-family: "Press Start 2P", monospace;
-  font-size: 0.85rem;
 }
 
 body {
@@ -98,16 +107,28 @@ body::after {
   border-bottom: 1px solid var(--g);
   width: 100%;
   background: linear-gradient(90deg, rgba(0, 217, 255, .08), rgba(0, 255, 65, .06), rgba(255, 79, 216, .08));
+  position: relative;
 }
 
 .navbar-inner {
-  width: min(900px, 100%);
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 14px 0;
+  padding: 12px 24px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  align-items: center;
+  position: relative;
+}
+
+.navbar::after {
+  content: "SCANNINNG...";
+  position: absolute;
+  top: 100%;
+  left: 20px;
+  font-size: 0.6rem;
+  color: var(--g);
+  animation: blink 0.8s step-end infinite;
+  letter-spacing: 2px;
 }
 
 .logo {
@@ -183,19 +204,30 @@ body::after {
 }
 
 .panel {
-  border: 1px solid var(--g);
-  background: #000;
+  background: rgba(0, 0, 0, 0.85);
+  border: 2px solid var(--g-dim);
   padding: 24px;
-  display: grid;
-  gap: 16px;
+  position: relative;
+  box-shadow: inset 0 0 20px rgba(0, 255, 65, 0.05);
+  transition: border-color 0.3s ease;
 }
 
-.content-wrap>.panel:nth-of-type(2n) {
-  border-color: var(--c);
+.panel:hover {
+  border-color: var(--g);
 }
 
-.content-wrap>.panel:nth-of-type(3n) {
-  border-color: var(--y);
+.panel::before {
+  content: "";
+  position: absolute;
+  top: -2px; left: -2px; width: 20px; height: 20px;
+  border-top: 4px solid var(--g); border-left: 4px solid var(--g);
+}
+
+.panel::after {
+  content: "";
+  position: absolute;
+  bottom: -2px; right: -2px; width: 20px; height: 20px;
+  border-bottom: 4px solid var(--g); border-right: 4px solid var(--g);
 }
 
 .divider {
@@ -401,21 +433,35 @@ button:hover,
   justify-self: end;
 }
 
+/* Mission Folder Styling for Projects */
 .project-card {
-  border: 1px solid var(--g);
-  padding: 20px;
-  display: grid;
-  gap: 16px;
-  margin-bottom: 24px;
-  background: linear-gradient(180deg, rgba(0, 255, 65, .03), rgba(0, 0, 0, 0));
+  background: #0a0a0a;
+  border: 1px solid var(--g-dim);
+  margin-bottom: 32px;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
 }
 
-.project-top {
+.folder-tab {
+  display: inline-block;
+  background: var(--g-dim);
+  color: #000;
+  padding: 4px 16px;
+  font-family: "Press Start 2P";
+  font-size: 0.6rem;
+  clip-path: polygon(0 0, 85% 0, 100% 100%, 0% 100%);
+}
+
+.project-header-row {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--g-dim); background: rgba(0,255,65,0.02);
 }
+
+.project-id-tag { color: var(--c); font-size: 0.8rem; margin-right: 10px; }
 
 .project-title {
   color: var(--c);
@@ -462,15 +508,49 @@ button:hover,
   animation: blink 1s step-end infinite;
 }
 
-.project-progress-wrap {
-  border: 1px solid rgba(0, 255, 65, .45);
-  height: 14px;
-  padding: 2px;
+/* AI Briefing Box */
+.briefing-box {
+  background: rgba(0, 217, 255, 0.05);
+  border: 1px dashed var(--c);
+  margin: 15px 20px;
+  padding: 12px;
+  font-size: 0.95rem;
+  color: var(--c); line-height: 1.4;
+  position: relative;
 }
 
-.project-progress-fill {
-  background: repeating-linear-gradient(90deg, var(--g) 0 8px, #008f11 8px 12px);
-  height: 100%;
+.briefing-box b { font-family: "Press Start 2P"; font-size: 0.6rem; display: block; margin-bottom: 6px; }
+
+/* Combat Log Tasks */
+.combat-log { margin: 15px 20px; }
+.log-entry {
+  display: flex; gap: 12px; align-items: center;
+  padding: 8px; border-bottom: 1px solid #111;
+  transition: background 0.2s; cursor: pointer;
+}
+.log-entry:hover { background: rgba(0,255,65,0.05); }
+
+.log-status-bullet { width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 5px currentColor; }
+.status-todo { color: var(--y); }
+.status-in-progress { color: var(--c); }
+.status-done { color: var(--g); }
+
+.log-priority {
+  font-size: 0.7rem; font-weight: bold; width: 80px; text-align: center;
+  border: 1px solid currentColor; padding: 2px 0;
+}
+.pri-high { color: var(--r); animation: blink 1s step-end infinite; }
+.pri-medium { color: var(--y); }
+.pri-low { color: var(--c); }
+
+/* Mission Progress Health Bar */
+.health-bar-container {
+  height: 10px; background: #222; border: 1px solid #444; overflow: hidden; margin-top: 10px;
+}
+.health-bar-fill {
+  height: 100%; background: linear-gradient(90deg, #ff0000, #00ff41);
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+  transition: width 0.5s ease;
 }
 
 .file-row {
