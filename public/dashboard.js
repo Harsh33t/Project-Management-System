@@ -9,7 +9,15 @@ async function getJson(url) {
   const [meta, projects] = await Promise.all([getJson("/api/meta"), getJson("/api/projects")]);
   const users = meta.users || [];
   const userSel = document.getElementById("currentUserSelect");
-  userSel.innerHTML = `[ ` + esc(localStorage.getItem("nexus_user") || "PLAYER_1") + ` ]`;
+  const storedUser = localStorage.getItem("nexus_user");
+  let displayUser = "PLAYER_1";
+  if (storedUser) {
+    try { 
+      const parsed = JSON.parse(storedUser);
+      displayUser = (typeof parsed === 'object' ? (parsed.username || parsed.name) : parsed) || storedUser;
+    } catch(e) { displayUser = storedUser; }
+  }
+  userSel.innerHTML = `[ ` + esc(displayUser) + ` ]`;
 
   const tasks = projects.flatMap((p) => p.tasks || []);
   const totalProjects = projects.length;

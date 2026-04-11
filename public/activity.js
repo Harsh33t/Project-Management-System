@@ -45,7 +45,15 @@ function render() {
   st.users = meta.users || [];
   st.projects = projects || [];
   st.rows = activity || [];
-  document.getElementById("currentUserSelect").innerHTML = `[ ` + esc(localStorage.getItem("nexus_user") || "PLAYER_1") + ` ]`;
+  const storedUser = localStorage.getItem("nexus_user");
+  let displayUser = "PLAYER_1";
+  if (storedUser) {
+    try { 
+      const parsed = JSON.parse(storedUser);
+      displayUser = (typeof parsed === 'object' ? (parsed.username || parsed.name) : parsed) || storedUser;
+    } catch(e) { displayUser = storedUser; }
+  }
+  document.getElementById("currentUserSelect").innerHTML = `[ ` + esc(displayUser) + ` ]`;
   const f = document.getElementById("projectFilter");
   f.innerHTML = [`<option value="">ALL PROJECTS</option>`].concat(st.projects.map((p) => `<option value="${p.id}">${esc(p.title)}</option>`)).join("");
   f.addEventListener("change", () => {

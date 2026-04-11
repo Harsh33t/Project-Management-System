@@ -182,8 +182,17 @@ async function load() {
   const [meta, projects] = await Promise.all([api("/api/meta"), api("/api/projects")]);
   st.users = meta.users || [];
   st.projects = projects || [];
+  
   const userSel = $("#currentUserSelect");
-  userSel.innerHTML = `[ ` + esc(st.user || localStorage.getItem("nexus_user") || "PLAYER_1") + ` ]`;
+  const storedUser = localStorage.getItem("nexus_user");
+  let displayUser = st.user || "PLAYER_1";
+  if (storedUser) {
+    try { 
+      const parsed = JSON.parse(storedUser);
+      displayUser = (typeof parsed === 'object' ? (parsed.username || parsed.name) : parsed) || storedUser;
+    } catch(e) { displayUser = storedUser; }
+  }
+  userSel.innerHTML = `[ ` + esc(displayUser) + ` ]`;
   renderProjects();
 }
 
