@@ -47,7 +47,10 @@
           </div>
           <div id="createBody" class="project-create-body" style="display:none">
             <div class="row-2">
-              <input id="projectTitle" placeholder="PROJECT TITLE" />
+              <div style="display:flex; gap:5px; flex:1">
+                <input id="projectTitle" placeholder="MISSION CODENAME" style="flex:1" />
+                <button id="genCodenameBtn" title="GENERATE MISSION CODENAME" style="padding:4px 10px; font-size:0.6rem; border-color:var(--c); color:var(--c);">GEN</button>
+              </div>
               <select id="projectStatus"><option value="planned">PLANNED</option><option value="active">ACTIVE</option><option value="completed">COMPLETED</option></select>
             </div>
             <textarea id="projectDescription" rows="4" placeholder="DESCRIPTION"></textarea>
@@ -75,7 +78,11 @@
     <script src="/app.js"></script>
     <script src="/chatbot.js"></script>
     <script src="/dotted-surface.js"></script>
-  <footer class="system-footer"><span>[ OXYGEN: 98% ]</span><span>[ SHIELDS: ACTIVE ]</span><span class="blink">_ UPTIME: OK _</span></footer>
-  <script src="/dotted-surface.js"></script>
-</body>
+    <footer class="system-footer">
+      <span>[ OXYGEN: 98% ]</span>
+      <span style="cursor:pointer; color:var(--y);" id="phyToggle">[ PHY: OFF ]</span>
+      <span>[ SHIELDS: ACTIVE ]</span>
+      <span class="blink">_ UPTIME: OK _</span>
+    </footer>
+  </body>
 </html>

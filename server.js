@@ -182,6 +182,9 @@ function readDb() {
   const db = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
   if (!Array.isArray(db.users) || !db.users.length) db.users = defaultUsers;
   if (!Array.isArray(db.accounts)) db.accounts = [];
+  
+  // Ensure XP exists
+  db.accounts.forEach(a => { if (a.xp === undefined) a.xp = 0; });
   db.projects = (db.projects || []).map((p) => ({
     createdAt: p.createdAt || new Date().toISOString(),
     attachments: Array.isArray(p.attachments) ? p.attachments : [],
@@ -212,6 +215,16 @@ function writeDb(db) {
 
 function id(prefix) {
   return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+}
+
+const RANKS = ["CADET", "PILOT", "OPERATIVE", "SERGEANT", "LIEUTENANT", "COMMANDER", "CAPTAIN", "MAJOR", "COLONEL", "GENERAL", "FLEET ADMIRAL"];
+function getRank(xp = 0) {
+  const lvl = Math.floor(Math.sqrt(xp / 10));
+  return {
+    rank: RANKS[Math.min(lvl, RANKS.length - 1)],
+    level: lvl + 1,
+    nextXp: Math.pow(lvl + 1, 2) * 10
+  };
 }
 
 function getActor(req, db) {
@@ -449,11 +462,14 @@ app.get("/api/auth/me", (req, res) => {
   if (!payload) {
     return res.status(401).json({ error: "Invalid or expired token" });
   }
+  const pilotInfo = getRank(payload.xp || 0);
   res.json({
     id: payload.id,
     username: payload.username,
     email: payload.email,
-    role: payload.role
+    role: payload.role,
+    xp: payload.xp || 0,
+    ...pilotInfo
   });
 });
 
@@ -890,8 +906,19 @@ app.put("/api/projects/:projectId/tasks/:taskId", (req, res) => {
   task.dueDate = dueDate ?? task.dueDate;
   task.notes = notes ?? task.notes;
   if (typeof completed === "boolean") {
+    const wasAlreadyDone = !!task.completed;
     task.completed = completed;
     if (completed) task.status = "done";
+    
+    // XP Reward for completing a new operation
+    if (completed && !wasAlreadyDone) {
+       const account = db.accounts.find(a => a.username === userName || a.id === userName);
+       if (account) {
+          const award = task.priority === "high" ? 50 : task.priority === "medium" ? 25 : 10;
+          account.xp = (account.xp || 0) + award;
+          logActivity(db, `Operative "${userName || 'Unknown'}" earned ${award} PX for MISSION "${task.title}"`, { action: "edited", projectId, userName: "SYSTEM" });
+       }
+    }
   }
   logActivity(db, `Task "${task.title}" edited in "${project.title}"`, {
     action: "edited",

@@ -33,6 +33,15 @@ h1, h2, h3, .logo-wrapper, .nav-link {
 body {
   position: relative;
   animation: pageFlicker .2s ease-out;
+  background: radial-gradient(circle at center, #001 0%, #000 100%);
+  overflow-x: hidden;
+}
+
+#starfield {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
 }
 
 body::after {
@@ -828,6 +837,18 @@ button:hover,
   justify-self: center;
   margin-top: 10px;
 }
+
+.toast-container {
+  position: fixed; top: 20px; right: 20px; z-index: 1000;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.toast {
+  background: rgba(0,0,0,0.9); border: 1px solid var(--c);
+  padding: 12px 20px; color: var(--c); font-family: 'Press Start 2P';
+  font-size: 0.65rem; box-shadow: 0 0 15px rgba(0,217,255,0.3);
+  animation: slideIn 0.3s ease-out;
+}
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
 @media (max-width: 768px) {
   .page-root {

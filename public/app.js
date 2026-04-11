@@ -1,5 +1,14 @@
 const esc = (s = "") => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const st = { users: [], projects: [], user: "PLAYER_1", q: "", status: "", sort: "createdAt" };
+const CODENAMES = {
+  p: ["NEBULA", "VOYAGER", "ORION", "TITAN", "APOLLO", "ZENITH", "COSMOS", "SOLAR", "LUNAR", "STELLAR", "OMEGA", "ALPHA", "NOVA", "QUASAR", "VOID", "GALAXY", "PULSAR", "ASTRA", "ECLIPSE", "ORBIT"],
+  s: ["STRIKE", "INITIATIVE", "CORE", "PULSE", "GATE", "BRIDGE", "FALL", "RISE", "PROTOCOL", "COMMAND", "SHIELD", "SWORD", "SPEAR", "EYE", "SIGNAL", "NETWORK", "LINK", "DASH", "JUMP", "DRIFT"]
+};
+function generateCodename() {
+  const p = CODENAMES.p[Math.floor(Math.random() * CODENAMES.p.length)];
+  const s = CODENAMES.s[Math.floor(Math.random() * CODENAMES.s.length)];
+  return `PROJECT_${p}_${s}`;
+}
 const $ = (q) => document.querySelector(q);
 
 const API_BASE = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
@@ -259,6 +268,7 @@ document.addEventListener("click", async (e) => {
   if (t.dataset.doneTask) {
     const [pid, tid] = t.dataset.doneTask.split(":");
     await api(`/api/projects/${pid}/tasks/${tid}`, { method: "PUT", body: JSON.stringify({ completed: true, status: "done" }) });
+    showToast("OPERATION CLEAR. XP AWARDED.", "success");
     return load();
   }
   if (t.dataset.deleteTask) {
@@ -329,6 +339,34 @@ $("#createProjectBtn").addEventListener("click", async () => {
   $("#projectDeadline").value = "";
   await load();
 });
+$("#genCodenameBtn").addEventListener("click", () => {
+  $("#projectTitle").value = generateCodename();
+  SFX.play(1000, 0.05, "sine");
+});
 $("#closePreview").addEventListener("click", () => $("#previewModal").close());
 
 load();
+
+// ═══════════════════════════════════════════════════════
+// TACTICAL KEYBOARD INTERFACE
+// ═══════════════════════════════════════════════════════
+window.addEventListener("keydown", (e) => {
+  if (e.target.matches("input, textarea")) return;
+  const k = e.key.toUpperCase();
+  if (k === "N") {
+    const body = $("#createBody");
+    const sym = $("#createToggleSymbol");
+    body.style.display = "grid";
+    sym.textContent = "[-]";
+    $("#projectTitle").focus();
+    SFX.confirm();
+  }
+  if (k === "S") {
+    e.preventDefault();
+    $("#searchProject").focus();
+    SFX.play(1500, 0.05, "sine");
+  }
+  if (k === "P") {
+    document.getElementById("phyToggle").click();
+  }
+});
