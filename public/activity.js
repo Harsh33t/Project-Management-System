@@ -34,7 +34,21 @@ function render() {
       const action = a.action || "edited";
       const msg = esc(a.message || "");
       const user = esc(a.userName || "PLAYER_1");
-      return `<article class="activity-row ${rowClass(a)}"><div class="activity-main"><span class="act-dot"></span><div><span style="opacity:.7">${action.toUpperCase()}:</span> <span style="color:#8dffad">"${msg}"</span> <span style="opacity:.7">BY</span> <span style="color:#ffd700">${user}</span></div></div><div class="activity-time">${rel(a.timestamp)}</div></article>`;
+      return `<article class="activity-row ${rowClass(a)}">
+        <div class="activity-main">
+          <span class="act-dot"></span>
+          <div style="line-height: 1.4;">
+            <div style="font-size: 0.9rem; margin-bottom: 2px;">
+              <span style="opacity:.7; font-family:'Press Start 2P'; font-size: 0.6rem; margin-right: 5px;">${action.toUpperCase()}:</span> 
+              <span style="color:#8dffad">"${msg}"</span>
+            </div>
+            <div style="font-size: 0.8rem; opacity: 0.8;">
+              <span style="opacity:.7">BY</span> <span style="color:#ffd700">${user}</span>
+            </div>
+          </div>
+        </div>
+        <div class="activity-time">${rel(a.timestamp)}</div>
+      </article>`;
     })
     .join("");
   document.getElementById("loadMoreBtn").style.display = filtered.length > st.limit ? "inline-block" : "none";

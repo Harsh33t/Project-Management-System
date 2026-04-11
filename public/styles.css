@@ -758,12 +758,12 @@ button:hover,
 }
 
 .activity-row {
-  border-bottom: 1px solid rgba(0, 255, 65, .45);
-  padding: 12px 0;
+  border-bottom: 2px solid var(--g-dim);
+  padding: 18px 0;
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 10px;
-  align-items: center;
+  gap: 15px;
+  align-items: flex-start;
 }
 
 .activity-main {
