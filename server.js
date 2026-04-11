@@ -466,13 +466,16 @@ app.post("/api/chat", async (req, res) => {
   if (!message) return res.status(400).json({ error: "message required" });
 
   const db = readDb();
+  const userName = getActor(req, db);
   const today = new Date().toISOString().split("T")[0];
 
-  // Build context of current projects & tasks
-  const projectSummary = db.projects.map(p => {
-    const tasks = (p.tasks || []).map(t => `  - "${t.title}" (status: ${t.status}, priority: ${t.priority || "medium"}, due: ${t.dueDate || "none"}, completed: ${t.completed})`).join("\n");
-    return `PROJECT: "${p.title}" [id: ${p.id}, status: ${p.status}, deadline: ${p.deadline || "none"}]\n${tasks || "  - (no tasks)"}`;
-  }).join("\n\n");
+  // Build context of current user's projects & tasks
+  const projectSummary = db.projects
+    .filter(p => !p.owner || p.owner === userName)
+    .map(p => {
+      const tasks = (p.tasks || []).map(t => `  - "${t.title}" (status: ${t.status}, priority: ${t.priority || "medium"}, due: ${t.dueDate || "none"}, completed: ${t.completed})`).join("\n");
+      return `PROJECT: "${p.title}" [id: ${p.id}, status: ${p.status}, deadline: ${p.deadline || "none"}]\n${tasks || "  - (no tasks)"}`;
+    }).join("\n\n");
 
   if (!GROQ_API_KEY) {
     return res.status(200).json({ reply: null });
@@ -575,10 +578,10 @@ IMPORTANT: Always include the action JSON when the user wants to create/modify s
             targetProjectId = db.projects[0] && db.projects[0].id;
           }
 
-          // If still no project, auto-create a default one
-          if (!targetProjectId || db.projects.length === 0) {
+          if (!targetProjectId || db.projects.filter(p => (!p.owner || p.owner === userName)).length === 0) {
             const autoProject = {
               id: id("p"),
+              owner: userName,
               title: "MISSIONS",
               description: "Auto-created by NEXUS BOT",
               status: "active",
@@ -622,6 +625,7 @@ IMPORTANT: Always include the action JSON when the user wants to create/modify s
         } else if (action.type === "create_project") {
           const newProject = {
             id: id("p"),
+            owner: userName,
             title: action.title || "Untitled Project",
             description: "",
             status: asProjectStatus(action.status || "active"),
@@ -693,21 +697,29 @@ app.get("/api/meta", (req, res) => {
 
 app.get("/api/projects", (req, res) => {
   const db = readDb();
+  const userName = getActor(req, db);
   const q = String(req.query.q || "").toLowerCase();
   const status = String(req.query.status || "").toLowerCase();
   const priority = String(req.query.priority || "").toLowerCase();
   const sort = String(req.query.sort || "createdAt");
+  
+  // Filter by ownership and query params
   let projects = db.projects.filter((p) => {
+    // If project is legacy (no owner), assign temporarily to logic
+    if (p.owner && p.owner !== userName) return false;
+    
     const titleOk = !q || p.title.toLowerCase().includes(q);
     const statusOk = !status || asProjectStatus(p.status) === status;
     const taskPriorityOk =
       !priority || (p.tasks || []).some((t) => String(t.priority || "").toLowerCase() === priority);
     return titleOk && statusOk && taskPriorityOk;
   });
+  
   projects = projects.sort((a, b) => {
     if (sort === "deadline") return String(a.deadline || "9999").localeCompare(String(b.deadline || "9999"));
     return String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
   });
+  
   projects = projects.map((p) => ({
     ...p,
     status: asProjectStatus(p.status),
@@ -725,6 +737,7 @@ app.post("/api/projects", (req, res) => {
   const userName = getActor(req, db);
   const project = {
     id: id("p"),
+    owner: userName,
     title,
     description: description || "",
     status: asProjectStatus(status),
