@@ -1,27 +1,153 @@
 {
   "projects": [
     {
-      "createdAt": "2026-04-11T03:34:54.015Z",
-      "attachments": [
-        {
-          "id": "f_1775877645136_3004",
-          "filename": "1775877644910_group_05.pdf",
-          "originalName": "group_05.pdf",
-          "category": "excel",
-          "size": 6610628,
-          "uploadedAt": "2026-04-11T03:20:45.136Z",
-          "url": "/uploads/1775877644910_group_05.pdf"
-        }
-      ],
+      "createdAt": "2026-04-11T10:12:31.052Z",
+      "attachments": [],
       "tasks": [],
-      "id": "p_1775877153905_1961",
-      "title": "Python mid sem",
-      "description": "have to study for python midsem",
-      "status": "planned",
-      "deadline": "2026-04-11"
+      "id": "p_1775902351052_4020",
+      "title": "QUANTUM",
+      "description": "",
+      "status": "active",
+      "deadline": "2026-04-17"
     }
   ],
   "activity": [
+    {
+      "id": "a_1775904840546_3330",
+      "message": "New operative \"HARSHEET\" enlisted",
+      "timestamp": "2026-04-11T10:54:00.546Z",
+      "action": "created",
+      "projectId": "",
+      "userName": "HARSHEET"
+    },
+    {
+      "action": "deleted",
+      "userName": "PLAYER_1",
+      "projectId": "p_1775892741916_7117",
+      "id": "a_1775903576297_3276",
+      "message": "Project \"MISSIONS\" deleted",
+      "timestamp": "2026-04-11T10:32:56.297Z"
+    },
+    {
+      "action": "created",
+      "userName": "NEXUS BOT",
+      "projectId": "p_1775902351052_4020",
+      "id": "a_1775902351052_1527",
+      "message": "Project \"QUANTUM\" created via NEXUS BOT",
+      "timestamp": "2026-04-11T10:12:31.052Z"
+    },
+    {
+      "action": "deleted",
+      "userName": "PLAYER_1",
+      "projectId": "p_1775892741916_7117",
+      "id": "a_1775901796713_3808",
+      "message": "Task \"TEST OF BEEE\" deleted from \"MISSIONS\"",
+      "timestamp": "2026-04-11T10:03:16.713Z"
+    },
+    {
+      "action": "created",
+      "userName": "NEXUS BOT",
+      "projectId": "p_1775892741916_7117",
+      "id": "a_1775901727259_5287",
+      "message": "Task \"TEST OF BEEE\" added to \"MISSIONS\" via NEXUS BOT",
+      "timestamp": "2026-04-11T10:02:07.259Z"
+    },
+    {
+      "action": "created",
+      "userName": "NEXUS BOT",
+      "projectId": "p_1775892741916_7117",
+      "id": "a_1775893195839_7595",
+      "message": "Task \"EXAM\" added to \"MISSIONS\" via NEXUS BOT",
+      "timestamp": "2026-04-11T07:39:55.839Z"
+    },
+    {
+      "action": "deleted",
+      "userName": "PLAYER_1",
+      "projectId": "p_1775892741916_7117",
+      "id": "a_1775893054080_2745",
+      "message": "Task \"EXAM\" deleted from \"MISSIONS\"",
+      "timestamp": "2026-04-11T07:37:34.080Z"
+    },
+    {
+      "action": "created",
+      "userName": "NEXUS BOT",
+      "projectId": "p_1775892741916_7117",
+      "id": "a_1775892741917_9988",
+      "message": "Task \"EXAM\" added to \"MISSIONS\" via NEXUS BOT",
+      "timestamp": "2026-04-11T07:32:21.917Z"
+    },
+    {
+      "action": "created",
+      "userName": "NEXUS BOT",
+      "projectId": "p_1775892741916_7117",
+      "id": "a_1775892741917_1049",
+      "message": "Project \"MISSIONS\" auto-created by NEXUS BOT",
+      "timestamp": "2026-04-11T07:32:21.917Z"
+    },
+    {
+      "action": "deleted",
+      "userName": "PLAYER_1",
+      "projectId": "p_1775877153905_1961",
+      "id": "a_1775892588433_753",
+      "message": "Project \"Python mid sem\" deleted",
+      "timestamp": "2026-04-11T07:29:48.433Z"
+    },
+    {
+      "action": "created",
+      "userName": "NEXUS BOT",
+      "projectId": "p_1775877153905_1961",
+      "id": "a_1775892309256_1816",
+      "message": "Task \"LAB\" added to \"Python mid sem\" via NEXUS BOT",
+      "timestamp": "2026-04-11T07:25:09.256Z"
+    },
+    {
+      "action": "created",
+      "userName": "NEXUS BOT",
+      "projectId": "p_1775877153905_1961",
+      "id": "a_1775892246674_5387",
+      "message": "Task \"EXAM\" added to \"Python mid sem\" via NEXUS BOT",
+      "timestamp": "2026-04-11T07:24:06.674Z"
+    },
+    {
+      "action": "created",
+      "userName": "COMMANDER",
+      "projectId": "",
+      "id": "a_1775890208966_9792",
+      "message": "New operative \"COMMANDER\" enlisted",
+      "timestamp": "2026-04-11T06:50:08.966Z"
+    },
+    {
+      "action": "created",
+      "userName": "FINALCOMMANDER",
+      "projectId": "",
+      "id": "a_1775890034542_4693",
+      "message": "New operative \"FINALCOMMANDER\" enlisted",
+      "timestamp": "2026-04-11T06:47:14.542Z"
+    },
+    {
+      "action": "created",
+      "userName": "SIMPLETESTTESTCOMMAN",
+      "projectId": "",
+      "id": "a_1775889974921_9730",
+      "message": "New operative \"SIMPLETESTTESTCOMMAN\" enlisted",
+      "timestamp": "2026-04-11T06:46:14.921Z"
+    },
+    {
+      "action": "created",
+      "userName": "TESTCOMMANDERX",
+      "projectId": "",
+      "id": "a_1775889847482_6143",
+      "message": "New operative \"TESTCOMMANDERX\" enlisted",
+      "timestamp": "2026-04-11T06:44:07.482Z"
+    },
+    {
+      "action": "created",
+      "userName": "TESTCOMMANDER",
+      "projectId": "",
+      "id": "a_1775889498377_2834",
+      "message": "New operative \"TESTCOMMANDER\" enlisted",
+      "timestamp": "2026-04-11T06:38:18.377Z"
+    },
     {
       "action": "edited",
       "userName": "PLAYER_1",
@@ -107,6 +233,98 @@
       "id": "u4",
       "name": "PIXEL",
       "color": "#ffd23f"
+    },
+    {
+      "id": "u_1775889498377_6785",
+      "name": "TESTCOMMANDER",
+      "color": "#00e639"
+    },
+    {
+      "id": "u_1775889847481_1546",
+      "name": "TESTCOMMANDERX",
+      "color": "#00cc31"
+    },
+    {
+      "id": "u_1775889974921_9084",
+      "name": "SIMPLETESTTESTCOMMAN",
+      "color": "#00cc31"
+    },
+    {
+      "id": "u_1775890034541_8376",
+      "name": "FINALCOMMANDER",
+      "color": "#00ff41"
+    },
+    {
+      "id": "u_1775890208965_9573",
+      "name": "COMMANDER",
+      "color": "#33ff66"
+    },
+    {
+      "id": "u_1775904840546_1571",
+      "name": "HARSHEET",
+      "color": "#4dff88"
+    }
+  ],
+  "accounts": [
+    {
+      "id": "acc_1775889498062_243",
+      "username": "TESTCOMMANDER",
+      "email": "test@nexus.com",
+      "passwordHash": "8a9a3e409bf5c9f7be558eb7f23da209:d49161d769a3c8ce8ebfc28f370838cf93a0fad0bca563a64228eb9b6c3385c6c70371c7aab2c923b605f917207c96b8e801d09e97825071ee7ab210383b96ae",
+      "avatarColor": "#00e639",
+      "role": "OPERATIVE",
+      "createdAt": "2026-04-11T06:38:18.377Z",
+      "provider": "local"
+    },
+    {
+      "id": "acc_1775889847162_9666",
+      "username": "TESTCOMMANDERX",
+      "email": "testx@nexus.com",
+      "passwordHash": "f01e1f7c96c7d9b858735522490fb85e:22c14bfdebf3f6dad7d6e3b3d2cd0cf1b34ac147e5c15cac038c65db055a7f71a5a8acc6bad9fb226e9e322e31de82f37df2496a5b5c35dd5471946363025e2a",
+      "avatarColor": "#00cc31",
+      "role": "OPERATIVE",
+      "createdAt": "2026-04-11T06:44:07.481Z",
+      "provider": "local"
+    },
+    {
+      "id": "acc_1775889974636_7463",
+      "username": "SIMPLETESTTESTCOMMAN",
+      "email": "testz@nexus.com",
+      "passwordHash": "c64379fdfc8555c9914dc35460359b53:0359f0ac019f331b1221b6e251d94ef9119b7f0249d394e233fded078201a5072ced86535ee9c0af3fb3321ebbd7244c516674cc9b6823b08e159599d4479c02",
+      "avatarColor": "#00cc31",
+      "role": "OPERATIVE",
+      "createdAt": "2026-04-11T06:46:14.920Z",
+      "provider": "local"
+    },
+    {
+      "id": "acc_1775890034316_9513",
+      "username": "FINALCOMMANDER",
+      "email": "final@nexus.com",
+      "passwordHash": "5f2242abbd5443eb031ee8b4a76c4fd7:2b659bf9a8ffaa5ade8a4912c6ef8dc18bb489e74b87127278713b3f3ac9622e76d4c2d0af666e0f3a15cdb807abd251581b705203f9b5bdb67c104c93448c8c",
+      "avatarColor": "#00ff41",
+      "role": "OPERATIVE",
+      "createdAt": "2026-04-11T06:47:14.541Z",
+      "provider": "local"
+    },
+    {
+      "id": "acc_1775890208901_7635",
+      "username": "COMMANDER",
+      "email": "commander@nexus.com",
+      "passwordHash": "d13b9fc8d5f6ffb809167b06f0e40de3:ec51dbdd4fbe9e65b9334331520af098dc937b9e27ec4e2b6479c2d864de1cc7b49ead1f083fa1cdc38e2e178304edc00c78d09ccac6c000b310b0eb6f353b48",
+      "avatarColor": "#33ff66",
+      "role": "OPERATIVE",
+      "createdAt": "2026-04-11T06:50:08.965Z",
+      "provider": "local"
+    },
+    {
+      "id": "acc_1775904840456_6428",
+      "username": "HARSHEET",
+      "email": "harsheet@gmail.com",
+      "passwordHash": "e9e8a77becb2cff1e0ef4f52f957cbe2:ead21f81f6b5a0b90984a10bdadec00cf18a9e810a654ee9e4673e4f3da47a5d6ef1348e2f29153d9e95424cbdc8465cff5a5696aec470628dbdac662061b2dd",
+      "avatarColor": "#4dff88",
+      "role": "OPERATIVE",
+      "createdAt": "2026-04-11T10:54:00.546Z",
+      "provider": "local"
     }
   ]
 }

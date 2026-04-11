@@ -2,8 +2,12 @@ const esc = (s = "") => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").r
 const st = { users: [], projects: [], user: "PLAYER_1", q: "", status: "", sort: "createdAt" };
 const $ = (q) => document.querySelector(q);
 
+const API_BASE = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
+  ? "" 
+  : "https://your-render-url-here.onrender.com";
+
 async function api(url, options = {}) {
-  const res = await fetch(url, {
+  const res = await fetch(API_BASE + url, {
     headers: { "Content-Type": "application/json", "x-user": st.user, ...(options.headers || {}) },
     ...options
   });
@@ -117,7 +121,9 @@ function renderProjects() {
         </div>
         <hr class="divider"/>
 
-        <div class="collapser" data-task-toggle="${p.id}"><span class="page-title" style="font-size:.95rem">▸ ADD TASK</span><span id="task_toggle_${p.id}">[+]</span></div>
+        <div style="margin: 10px 0;">
+          <button data-task-toggle="${p.id}" style="width:100%; padding:10px; border:1px dashed #00ff41; background:rgba(0,255,65,0.05); color:#00ff41; font-family:inherit; cursor:pointer; font-size:0.75rem;">+ ADD NEW TASK</button>
+        </div>
         <form id="task_form_${p.id}" class="task-form-body" style="display:none" data-task-form="${p.id}">
           <div class="task-row-1">
             <input name="title" placeholder="TASK TITLE" required />
@@ -197,10 +203,9 @@ document.addEventListener("click", async (e) => {
   if (toggle) {
     const pid = toggle.dataset.taskToggle;
     const form = document.getElementById(`task_form_${pid}`);
-    const sym = document.getElementById(`task_toggle_${pid}`);
     const open = form.style.display !== "none";
     form.style.display = open ? "none" : "grid";
-    sym.textContent = open ? "[+]" : "[-]";
+    toggle.textContent = open ? "+ ADD NEW TASK" : "- CANCEL";
     return;
   }
   if (t.id === "createToggle" || t.closest("#createToggle")) {

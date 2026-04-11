@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NEXUS PAM — LOGIN</title>
+    <meta name="description" content="Identify yourself, Commander. Access the NEXUS PAM mission control system." />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/auth.css" />
+  </head>
+  <body>
+    <canvas id="starfield"></canvas>
+    <div class="scanline-overlay"></div>
+
+    <div class="auth-container" id="authContainer">
+      <!-- NEXUS PAM Logo -->
+      <div class="logo-section">
+        <div class="pixel-ship">
+          <svg viewBox="0 0 16 16" width="64" height="64">
+            <rect x="7" y="0" width="2" height="4" fill="#ffffff"></rect>
+            <rect x="6" y="4" width="4" height="6" fill="#00ff41"></rect>
+            <rect x="4" y="6" width="8" height="4" fill="#00ff41"></rect>
+            <rect x="2" y="10" width="12" height="2" fill="#008f11"></rect>
+            <rect x="0" y="12" width="4" height="4" fill="#ff0055"></rect>
+            <rect x="12" y="12" width="4" height="4" fill="#ff0055"></rect>
+            <rect x="7" y="10" width="2" height="6" fill="#00ff41"></rect>
+          </svg>
+        </div>
+        <h1 class="logo-title">
+          <span class="logo-nexus">NEXUS</span>
+          <span class="logo-pam">PAM</span>
+        </h1>
+        <div class="subtitle">
+          IDENTIFY YOURSELF, COMMANDER<span class="cursor-blink">_</span>
+        </div>
+      </div>
+
+      <!-- Login Box -->
+      <div class="auth-box" id="loginBox">
+        <div class="auth-header">[ INSERT CREDENTIALS ]</div>
+
+        <form id="loginForm" autocomplete="off">
+          <div class="input-group">
+            <label for="loginUsername">USERNAME / EMAIL:</label>
+            <input type="text" id="loginUsername" name="username" class="no-uppercase" placeholder="ENTER CALLSIGN OR EMAIL" required autocomplete="username" />
+          </div>
+          <div class="input-group">
+            <label for="loginPassword">PASSWORD:</label>
+            <input type="password" id="loginPassword" name="password" placeholder="●●●●●●●●" required autocomplete="current-password" />
+          </div>
+
+          <button type="submit" class="btn-enter" id="loginBtn">
+            <span class="btn-arrow">▶</span> ENTER SYSTEM
+          </button>
+        </form>
+
+        <div class="divider-or">
+          <span>── OR ──</span>
+        </div>
+
+        <button class="btn-google" id="googleLoginBtn">
+          <span class="google-icon">[G]</span> CONTINUE WITH GOOGLE
+        </button>
+
+        <div class="auth-footer">
+          NEW RECRUIT? <a href="/register.html" class="auth-link">[REGISTER HERE]</a>
+        </div>
+      </div>
+
+      <!-- Status Messages -->
+      <div class="status-msg" id="statusMsg"></div>
+    </div>
+
+    <!-- Matrix Rain Canvas (hidden until success) -->
+    <canvas id="matrixCanvas" class="matrix-canvas"></canvas>
+
+    <!-- Red flash overlay -->
+    <div class="red-flash" id="redFlash"></div>
+
+    <!-- Success overlay -->
+    <div class="success-overlay" id="successOverlay">
+      <div class="success-text" id="successText"></div>
+    </div>
+
+    <script src="/auth.js"></script>
+    <script src="/dotted-surface.js"></script>
+</body>
+</html>

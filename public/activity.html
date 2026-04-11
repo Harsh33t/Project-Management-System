@@ -6,17 +6,19 @@
     <title>Nexus Activity</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/chatbot.css" />
   </head>
   <body>
     <nav class="navbar">
       <div class="navbar-inner">
         <div class="logo">NEXUS PAM</div>
         <div class="nav-right">
-          <a class="nav-link" href="/">[HOME]</a>
+          <a class="nav-link" href="/index.html">[HOME]</a>
           <a class="nav-link" href="/dashboard.html">[DASHBOARD]</a>
           <a class="nav-link" href="/projects.html">[PROJECTS]</a>
           <a class="nav-link active" href="/activity.html">[ACTIVITY]</a>
           <select id="currentUserSelect"></select>
+          <button id="logoutBtn" style="border-color:#ff3d3d;color:#ff8a8a;font-size:.65rem;padding:6px 12px" onclick="localStorage.removeItem('nexus_token');localStorage.removeItem('nexus_user');window.location.href='/login.html'">[LOGOUT]</button>
         </div>
       </div>
     </nav>
@@ -33,6 +35,9 @@
         </section>
       </div>
     </main>
+    <script src="/auth-guard.js"></script>
     <script src="/activity.js"></script>
-  </body>
+    <script src="/chatbot.js"></script>
+    <script src="/dotted-surface.js"></script>
+</body>
 </html>

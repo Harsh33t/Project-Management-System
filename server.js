@@ -2,12 +2,79 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
+const cors = require("cors");
+const crypto = require("crypto");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "db.json");
 const UPLOADS_DIR = path.join(__dirname, "uploads");
+
+/* ═══════════════════════════════════════════════════════
+   AUTH CONFIG
+   ═══════════════════════════════════════════════════════ */
+
+// JWT secret – set via env var in production
+const JWT_SECRET = process.env.JWT_SECRET || "nexus-pam-secret-" + crypto.randomBytes(8).toString("hex");
+const JWT_EXPIRY_DAYS = 7;
+
+// Google OAuth (set these env vars on Render)
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
+const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || "http://localhost:3000/api/auth/google/callback";
+
+// Optional: Groq API for chatbot AI
+const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
+
+/* ═══════════════════════════════════════════════════════
+   SIMPLE JWT IMPLEMENTATION (no dependency needed)
+   ═══════════════════════════════════════════════════════ */
+
+function base64url(str) {
+  return Buffer.from(str).toString("base64url");
+}
+
+function createJWT(payload) {
+  const header = base64url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+  const exp = Date.now() + JWT_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+  const body = base64url(JSON.stringify({ ...payload, exp }));
+  const sig = crypto.createHmac("sha256", JWT_SECRET).update(header + "." + body).digest("base64url");
+  return header + "." + body + "." + sig;
+}
+
+function verifyJWT(token) {
+  try {
+    const [header, body, sig] = token.split(".");
+    const expectedSig = crypto.createHmac("sha256", JWT_SECRET).update(header + "." + body).digest("base64url");
+    if (sig !== expectedSig) return null;
+    const payload = JSON.parse(Buffer.from(body, "base64url").toString());
+    if (payload.exp && payload.exp < Date.now()) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   SIMPLE PASSWORD HASHING (using crypto, no bcrypt needed)
+   ═══════════════════════════════════════════════════════ */
+
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+  return salt + ":" + hash;
+}
+
+function verifyPassword(password, stored) {
+  const [salt, hash] = stored.split(":");
+  const testHash = crypto.scryptSync(password, salt, 64).toString("hex");
+  return hash === testHash;
+}
+
+/* ═══════════════════════════════════════════════════════
+   MULTER SETUP
+   ═══════════════════════════════════════════════════════ */
 
 const allowedExt = new Set([".xlsx", ".xls", ".pdf", ".doc", ".docx", ".rar"]);
 const allowedCategory = new Set(["excel", "pdf", "word", "rar"]);
@@ -41,9 +108,18 @@ const upload = multer({
   }
 });
 
+/* ═══════════════════════════════════════════════════════
+   MIDDLEWARE
+   ═══════════════════════════════════════════════════════ */
+
+app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/uploads", express.static(UPLOADS_DIR));
+
+/* ═══════════════════════════════════════════════════════
+   DATABASE
+   ═══════════════════════════════════════════════════════ */
 
 const defaultUsers = [
   { id: "u1", name: "PLAYER_1", color: "#00ff41" },
@@ -60,6 +136,7 @@ function ensureDb() {
   if (!fs.existsSync(DATA_FILE)) {
     const seed = {
       users: defaultUsers,
+      accounts: [],
       projects: [
         {
           id: "p1",
@@ -104,6 +181,7 @@ function readDb() {
   ensureDb();
   const db = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
   if (!Array.isArray(db.users) || !db.users.length) db.users = defaultUsers;
+  if (!Array.isArray(db.accounts)) db.accounts = [];
   db.projects = (db.projects || []).map((p) => ({
     createdAt: p.createdAt || new Date().toISOString(),
     attachments: Array.isArray(p.attachments) ? p.attachments : [],
@@ -173,6 +251,440 @@ function projectProgress(project) {
   const done = tasks.filter((t) => t.completed || t.status === "done").length;
   return Math.round((done / tasks.length) * 100);
 }
+
+function randomGreenShade() {
+  const greens = ["#00ff41", "#00e639", "#00cc31", "#33ff66", "#1aff5c", "#00b33c", "#4dff88"];
+  return greens[Math.floor(Math.random() * greens.length)];
+}
+
+/* ═══════════════════════════════════════════════════════
+   AUTH ROUTES
+   ═══════════════════════════════════════════════════════ */
+
+// Register
+app.post("/api/auth/register", (req, res) => {
+  const { username, email, password } = req.body;
+  if (!username || !email || !password) {
+    return res.status(400).json({ error: "All fields are required" });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ error: "Password must be at least 6 characters" });
+  }
+  if (username.length < 3 || username.length > 20) {
+    return res.status(400).json({ error: "Username must be 3-20 characters" });
+  }
+
+  const db = readDb();
+  const existing = db.accounts.find(
+    (a) => a.username.toLowerCase() === username.toLowerCase() || a.email.toLowerCase() === email.toLowerCase()
+  );
+  if (existing) {
+    return res.status(409).json({ error: "Username or email already exists" });
+  }
+
+  const account = {
+    id: id("acc"),
+    username: username.toUpperCase(),
+    email: email.toLowerCase(),
+    passwordHash: hashPassword(password),
+    avatarColor: randomGreenShade(),
+    role: "OPERATIVE",
+    createdAt: new Date().toISOString(),
+    provider: "local"
+  };
+
+  db.accounts.push(account);
+
+  // Also add to users list for project assignment
+  const userId = id("u");
+  db.users.push({ id: userId, name: account.username, color: account.avatarColor });
+
+  logActivity(db, `New operative "${account.username}" enlisted`, {
+    action: "created",
+    userName: account.username
+  });
+
+  writeDb(db);
+  res.status(201).json({ message: "Recruit registered successfully" });
+});
+
+// Login
+app.post("/api/auth/login", (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: "Username and password required" });
+  }
+
+  const db = readDb();
+  const account = db.accounts.find(
+    (a) => a.username.toLowerCase() === username.toLowerCase() || a.email.toLowerCase() === username.toLowerCase()
+  );
+
+  if (!account || !account.passwordHash) {
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
+
+  if (!verifyPassword(password, account.passwordHash)) {
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
+
+  const token = createJWT({
+    id: account.id,
+    username: account.username,
+    email: account.email,
+    role: account.role
+  });
+
+  res.json({
+    token,
+    user: {
+      id: account.id,
+      username: account.username,
+      email: account.email,
+      avatarColor: account.avatarColor,
+      role: account.role
+    }
+  });
+});
+
+// Google OAuth - initiate
+app.get("/api/auth/google", (req, res) => {
+  if (!GOOGLE_CLIENT_ID) {
+    return res.status(501).json({ error: "Google OAuth not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables." });
+  }
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: GOOGLE_REDIRECT_URI,
+    response_type: "code",
+    scope: "openid email profile",
+    access_type: "offline",
+    prompt: "consent"
+  });
+  res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params}`);
+});
+
+// Google OAuth - callback
+app.get("/api/auth/google/callback", async (req, res) => {
+  const { code } = req.query;
+  if (!code) return res.redirect("/login.html?error=no_code");
+
+  try {
+    // Exchange code for tokens
+    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        client_id: GOOGLE_CLIENT_ID,
+        client_secret: GOOGLE_CLIENT_SECRET,
+        code,
+        redirect_uri: GOOGLE_REDIRECT_URI,
+        grant_type: "authorization_code"
+      })
+    });
+    const tokenData = await tokenRes.json();
+    if (!tokenData.access_token) throw new Error("No access token");
+
+    // Get user info
+    const userRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` }
+    });
+    const googleUser = await userRes.json();
+    if (!googleUser.email) throw new Error("No email from Google");
+
+    const db = readDb();
+    let account = db.accounts.find((a) => a.email.toLowerCase() === googleUser.email.toLowerCase());
+
+    if (!account) {
+      // Auto-register
+      const username = (googleUser.name || googleUser.email.split("@")[0])
+        .toUpperCase()
+        .replace(/[^A-Z0-9_]/g, "_")
+        .slice(0, 20);
+
+      account = {
+        id: id("acc"),
+        username,
+        email: googleUser.email.toLowerCase(),
+        passwordHash: "",
+        avatarColor: randomGreenShade(),
+        role: "OPERATIVE",
+        createdAt: new Date().toISOString(),
+        provider: "google",
+        googleId: googleUser.id
+      };
+      db.accounts.push(account);
+
+      const userId = id("u");
+      db.users.push({ id: userId, name: account.username, color: account.avatarColor });
+
+      logActivity(db, `Operative "${account.username}" enlisted via GOOGLE`, {
+        action: "created",
+        userName: account.username
+      });
+
+      writeDb(db);
+    }
+
+    const token = createJWT({
+      id: account.id,
+      username: account.username,
+      email: account.email,
+      role: account.role
+    });
+
+    res.redirect(`/login.html?token=${token}&username=${encodeURIComponent(account.username)}`);
+  } catch (err) {
+    console.error("Google OAuth error:", err);
+    res.redirect("/login.html?error=google_failed");
+  }
+});
+
+// Verify token endpoint
+app.get("/api/auth/me", (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  const payload = verifyJWT(authHeader.slice(7));
+  if (!payload) {
+    return res.status(401).json({ error: "Invalid or expired token" });
+  }
+  res.json({
+    id: payload.id,
+    username: payload.username,
+    email: payload.email,
+    role: payload.role
+  });
+});
+
+/* ═══════════════════════════════════════════════════════
+   CHATBOT AI ENDPOINT
+   ═══════════════════════════════════════════════════════ */
+
+app.post("/api/chat", async (req, res) => {
+  const { message } = req.body;
+  if (!message) return res.status(400).json({ error: "message required" });
+
+  const db = readDb();
+  const today = new Date().toISOString().split("T")[0];
+
+  // Build context of current projects & tasks
+  const projectSummary = db.projects.map(p => {
+    const tasks = (p.tasks || []).map(t => `  - "${t.title}" (status: ${t.status}, priority: ${t.priority || "medium"}, due: ${t.dueDate || "none"}, completed: ${t.completed})`).join("\n");
+    return `PROJECT: "${p.title}" [id: ${p.id}, status: ${p.status}, deadline: ${p.deadline || "none"}]\n${tasks || "  - (no tasks)"}`;
+  }).join("\n\n");
+
+  if (!GROQ_API_KEY) {
+    return res.status(200).json({ reply: null });
+  }
+
+  try {
+    const systemPrompt = `You are NEXUS BOT, a retro military-style AI assistant for NEXUS PAM project management system.
+
+PERSONALITY:
+- Speak in short, punchy military-style sentences
+- Use ALL CAPS for important info (project names, task names, dates)
+- Keep responses to 2-3 lines max
+- Be helpful and proactive
+
+CURRENT DATE: ${today}
+CURRENT YEAR: ${new Date().getFullYear()}
+
+EXISTING PROJECTS & TASKS:
+${projectSummary || "(no projects yet)"}
+
+CRITICAL RULES FOR ACTIONS:
+When the user wants to CREATE or ADD something, determine if they mean a PROJECT or a TASK.
+
+PROJECT CREATION triggers:
+- "create project [name]"
+- "new project [name]"
+- "start project [name]"
+ACTION FORMAT:
+{"action":{"type":"create_project","title":"PROJECT NAME","status":"active","deadline":"YYYY-MM-DD"}}
+
+TASK CREATION triggers:
+- "I have exam on 26/4"
+- "add meeting tomorrow"
+- "remind me to..."
+- "create task [name]"
+ACTION FORMAT: 
+{"action":{"type":"create_task","title":"TASK NAME","projectId":"ID_OF_EXISTING_PROJECT","priority":"medium","dueDate":"YYYY-MM-DD"}}
+* NOTE: If the user asks to create a task, you MUST pick an existing projectId from the list above. If NO projects exist, use action type "create_project" instead to initialize the system.
+
+For dates:
+- "26/4" or "26/04" means day/month, convert to YYYY-MM-DD format using current year (${new Date().getFullYear()})
+- "tomorrow" means the day after ${today}
+- "next week" means 7 days from ${today}
+- If no date given, leave dueDate empty
+
+Or to mark a task done:
+{"action":{"type":"complete_task","taskId":"TASK_ID","projectId":"PROJECT_ID"}}
+
+Or to delete a project:
+{"action":{"type":"delete_project","projectId":"PROJECT_ID"}}
+
+IMPORTANT: Always include the action JSON when the user wants to create/modify something. The JSON MUST BE VALID. Only ONE action per response.`;
+
+    const aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: message }
+        ],
+        max_tokens: 300,
+        temperature: 0.6
+      })
+    });
+
+    const aiData = await aiRes.json();
+    const content = aiData.choices?.[0]?.message?.content || "";
+
+    // Extract JSON action from response
+    let action = null;
+    let actionResult = null;
+    const jsonMatch = content.match(/\{\s*"action"\s*:\s*\{[^}]*\}\s*\}/);
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0]);
+        action = parsed.action;
+      } catch {
+        // Try a more lenient parse
+        const lenientMatch = content.match(/\{[\s\S]*?"action"[\s\S]*?\}\s*\}/);
+        if (lenientMatch) {
+          try { action = JSON.parse(lenientMatch[0]).action; } catch {}
+        }
+      }
+    }
+
+    // AUTO-EXECUTE the action on the server
+    if (action) {
+      try {
+        if (action.type === "create_task") {
+          // Find the target project, or auto-create one if none exist
+          let targetProjectId = action.projectId || (db.projects[0] && db.projects[0].id);
+          
+          // If no project found by the given ID, try first project
+          if (targetProjectId && !db.projects.find(p => p.id === targetProjectId)) {
+            targetProjectId = db.projects[0] && db.projects[0].id;
+          }
+
+          // If still no project, auto-create a default one
+          if (!targetProjectId || db.projects.length === 0) {
+            const autoProject = {
+              id: id("p"),
+              title: "MISSIONS",
+              description: "Auto-created by NEXUS BOT",
+              status: "active",
+              deadline: "",
+              createdAt: new Date().toISOString(),
+              tasks: [],
+              attachments: []
+            };
+            db.projects.unshift(autoProject);
+            logActivity(db, `Project "MISSIONS" auto-created by NEXUS BOT`, {
+              action: "created",
+              projectId: autoProject.id,
+              userName: "NEXUS BOT"
+            });
+            targetProjectId = autoProject.id;
+          }
+
+          const project = db.projects.find(p => p.id === targetProjectId);
+          if (project) {
+            const newTask = {
+              id: id("t"),
+              title: action.title || "Untitled Task",
+              status: "todo",
+              priority: action.priority || "medium",
+              assignedUsers: [],
+              dueDate: action.dueDate || "",
+              notes: "Created by NEXUS BOT",
+              completed: false,
+              comments: [],
+              createdAt: new Date().toISOString()
+            };
+            project.tasks.unshift(newTask);
+            logActivity(db, `Task "${newTask.title}" added to "${project.title}" via NEXUS BOT`, {
+              action: "created",
+              projectId: targetProjectId,
+              userName: "NEXUS BOT"
+            });
+            writeDb(db);
+            actionResult = { success: true, type: "create_task", taskId: newTask.id, projectTitle: project.title };
+          }
+        } else if (action.type === "create_project") {
+          const newProject = {
+            id: id("p"),
+            title: action.title || "Untitled Project",
+            description: "",
+            status: asProjectStatus(action.status || "active"),
+            deadline: action.deadline || "",
+            createdAt: new Date().toISOString(),
+            tasks: [],
+            attachments: []
+          };
+          db.projects.unshift(newProject);
+          logActivity(db, `Project "${newProject.title}" created via NEXUS BOT`, {
+            action: "created",
+            projectId: newProject.id,
+            userName: "NEXUS BOT"
+          });
+          writeDb(db);
+          actionResult = { success: true, type: "create_project", projectId: newProject.id };
+        } else if (action.type === "complete_task" && action.taskId && action.projectId) {
+          const project = db.projects.find(p => p.id === action.projectId);
+          if (project) {
+            const task = (project.tasks || []).find(t => t.id === action.taskId);
+            if (task) {
+              task.completed = true;
+              task.status = "done";
+              logActivity(db, `Task "${task.title}" completed via NEXUS BOT`, {
+                action: "edited",
+                projectId: action.projectId,
+                userName: "NEXUS BOT"
+              });
+              writeDb(db);
+              actionResult = { success: true, type: "complete_task" };
+            }
+          }
+        } else if (action.type === "delete_project" && action.projectId) {
+          const idx = db.projects.findIndex(p => p.id === action.projectId);
+          if (idx >= 0) {
+            const [removed] = db.projects.splice(idx, 1);
+            logActivity(db, `Project "${removed.title}" deleted via NEXUS BOT`, {
+              action: "deleted",
+              projectId: action.projectId,
+              userName: "NEXUS BOT"
+            });
+            writeDb(db);
+            actionResult = { success: true, type: "delete_project" };
+          }
+        }
+      } catch (execErr) {
+        console.error("Action execution error:", execErr);
+        actionResult = { success: false, error: execErr.message };
+      }
+    }
+
+    // Clean the reply text (remove JSON block)
+    const reply = content.replace(/\{\s*"action"[\s\S]*?\}\s*\}/g, "").trim();
+    return res.json({ reply: reply || content, action, actionResult });
+  } catch (err) {
+    console.error("Groq API error:", err);
+    return res.status(200).json({ reply: "SYSTEM ERROR. AI CORE OFFLINE. USE MANUAL COMMANDS." });
+  }
+});
+
+/* ═══════════════════════════════════════════════════════
+   EXISTING API ROUTES (unchanged logic)
+   ═══════════════════════════════════════════════════════ */
 
 app.get("/api/meta", (req, res) => {
   const db = readDb();
@@ -288,8 +800,7 @@ app.post("/api/projects/:projectId/tasks", (req, res) => {
     title,
     status: asTaskStatus(status),
     priority,
-    assignedUsers: Array.isArray(assignedUsers) ? assignedUsers : []
-    ,
+    assignedUsers: Array.isArray(assignedUsers) ? assignedUsers : [],
     dueDate: dueDate || "",
     notes: notes || "",
     completed: Boolean(completed) || asTaskStatus(status) === "done",
@@ -466,7 +977,22 @@ app.get("/api/projects/:projectId/export", (req, res) => {
   res.send(JSON.stringify(project, null, 2));
 });
 
+/* ═══════════════════════════════════════════════════════
+   CATCH-ALL: Redirect unauthenticated to login
+   ═══════════════════════════════════════════════════════ */
+
+// Serve login as the landing page for root
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "login.html"));
+});
+
+/* ═══════════════════════════════════════════════════════
+   START SERVER
+   ═══════════════════════════════════════════════════════ */
+
 app.listen(PORT, () => {
   ensureDb();
   console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Google OAuth: ${GOOGLE_CLIENT_ID ? "CONFIGURED" : "NOT CONFIGURED (set GOOGLE_CLIENT_ID)"}`);
+  console.log(`Groq AI: ${GROQ_API_KEY ? "CONFIGURED" : "NOT CONFIGURED (set GROQ_API_KEY)"}`);
 });

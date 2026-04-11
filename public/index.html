@@ -1,71 +1,443 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nexus PAM Home</title>
-    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
-  </head>
-  <body>
-    <div class="relative min-h-screen w-full bg-[#050505] text-white overflow-hidden flex flex-col uppercase tracking-widest font-['Press_Start_2P',_cursive] text-[10px]">
-      <style>
-        @keyframes move-stars { from { transform: translateY(0); } to { transform: translateY(-1000px); } }
-        @keyframes float-ship { 0%,100% { transform: translateY(0) rotate(0deg);} 50% { transform: translateY(-15px) rotate(2deg);} }
-        @keyframes blink { 50% { opacity: 0; } }
-        @keyframes enemy-wiggle { from { transform: translateX(-15px);} to { transform: translateX(15px);} }
-        .stars-bg { background: transparent; box-shadow: 240px 10px #FFF, 400px 150px #FFF, 600px 400px #FFF, 800px 100px #FFF, 1200px 700px #FFF, 100px 800px #FFF, 1100px 300px #FFF; animation: move-stars 80s linear infinite; }
-        .hud-scanline { background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.2) 50%), linear-gradient(90deg, rgba(255,0,0,0.05), rgba(0,255,0,0.02), rgba(0,0,255,0.05)); background-size: 100% 4px, 3px 100%; }
-      </style>
 
-      <div class="absolute inset-0 z-0">
-        <div class="stars-bg absolute w-1 h-1"></div>
-        <div class="stars-bg absolute w-[2px] h-[2px] opacity-50" style="animation-duration: 120s; left: 10%"></div>
-        <div class="absolute inset-0 hud-scanline pointer-events-none z-50"></div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nexus PAM Home</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/chatbot.css" />
+</head>
+
+<body>
+  <div
+    class="relative h-screen w-full bg-[#050505] text-white overflow-hidden flex flex-col uppercase tracking-widest font-['Press_Start_2P',_cursive] text-[10px]">
+    <style>
+      @keyframes move-stars {
+        from {
+          transform: translateY(0);
+        }
+
+        to {
+          transform: translateY(-1000px);
+        }
+      }
+
+      @keyframes animate-laser {
+        from {
+          transform: translateY(0);
+        }
+
+        to {
+          transform: translateY(-150vh);
+        }
+      }
+
+      @keyframes explosion {
+        0% {
+          transform: scale(1);
+          opacity: 1;
+        }
+
+        100% {
+          transform: scale(2);
+          opacity: 0;
+        }
+      }
+
+      @keyframes float-ship {
+
+        0%,
+        100% {
+          transform: translateY(0) rotate(0deg);
+        }
+
+        50% {
+          transform: translateY(-15px) rotate(2deg);
+        }
+      }
+
+      @keyframes blink {
+        50% {
+          opacity: 0;
+        }
+      }
+
+      @keyframes enemy-wiggle {
+        from {
+          transform: translateX(-15px);
+        }
+
+        to {
+          transform: translateX(15px);
+        }
+      }
+
+      .stars-bg {
+        background: transparent;
+        box-shadow: 240px 10px #FFF, 400px 150px #FFF, 600px 400px #FFF, 800px 100px #FFF, 1200px 700px #FFF, 100px 800px #FFF, 1100px 300px #FFF;
+        animation: move-stars 80s linear infinite;
+      }
+
+      .hud-scanline {
+        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.05), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.05));
+        background-size: 100% 4px, 3px 100%;
+      }
+    </style>
+
+    <div class="fixed inset-0 z-0">
+      <div class="stars-bg absolute w-1 h-1"></div>
+      <div class="stars-bg absolute w-[2px] h-[2px] opacity-50" style="animation-duration: 120s; left: 10%"></div>
+      <div class="absolute inset-0 hud-scanline pointer-events-none z-50"></div>
+    </div>
+
+    <nav id="topNav"
+      class="relative z-40 w-full p-6 md:p-10 flex justify-between items-start h-screen-nav transition-opacity duration-1000">
+      <div class="flex flex-col gap-3">
+        <div class="text-[#00ff41]">SCORE: <span class="text-white">040892</span></div>
+        <div class="text-[#ff0055]">LIVES: <span class="text-white">♥♥♥</span></div>
+      </div>
+      <div class="text-center">
+        <div class="text-amber-400 mb-2">STAGE 01</div>
+        <div class="text-[8px] animate-[blink_1s_step-end_infinite] text-white/80">INSERT COIN</div>
+      </div>
+      <div class="hidden md:flex flex-col items-end gap-3">
+        <div class="text-white/60">HI-SCORE: 99999</div>
+      </div>
+    </nav>
+
+    <main class="relative z-20 flex-grow flex flex-col items-center justify-center px-6">
+      <div id="topEnemy"
+        class="mb-16 animate-[enemy-wiggle_2s_ease-in-out_infinite_alternate] transition-all duration-1000 origin-center">
+        <svg width="80" height="54" viewBox="0 0 15 10" fill="#ff0055" class="drop-shadow-[0_0_8px_rgba(255,0,85,0.6)]">
+          <rect x="4" y="0" width="7" height="1"></rect>
+          <rect x="3" y="1" width="9" height="1"></rect>
+          <rect x="2" y="2" width="11" height="1"></rect>
+          <rect x="2" y="3" width="2" height="1"></rect>
+          <rect x="5" y="3" width="5" height="1"></rect>
+          <rect x="11" y="3" width="2" height="1"></rect>
+          <rect x="0" y="4" width="15" height="1"></rect>
+          <rect x="2" y="5" width="2" height="1"></rect>
+          <rect x="5" y="5" width="5" height="1"></rect>
+          <rect x="11" y="5" width="2" height="1"></rect>
+        </svg>
       </div>
 
-      <nav class="relative z-40 w-full p-6 md:p-10 flex justify-between items-start">
-        <div class="flex flex-col gap-3">
-          <div class="text-[#00ff41]">SCORE: <span class="text-white">040892</span></div>
-          <div class="text-[#ff0055]">LIVES: <span class="text-white">♥♥♥</span></div>
-        </div>
-        <div class="text-center">
-          <div class="text-amber-400 mb-2">STAGE 01</div>
-          <div class="text-[8px] animate-[blink_1s_step-end_infinite] text-white/80">INSERT COIN</div>
-        </div>
-        <div class="hidden md:flex flex-col items-end gap-3">
-          <div class="text-white/60">HI-SCORE: 99999</div>
-        </div>
-      </nav>
-
-      <main class="relative z-20 flex-grow flex flex-col items-center justify-center px-6">
-        <div class="mb-16 animate-[enemy-wiggle_2s_ease-in-out_infinite_alternate]">
-          <svg width="80" height="54" viewBox="0 0 15 10" fill="#ff0055" class="drop-shadow-[0_0_8px_rgba(255,0,85,0.6)]">
-            <rect x="4" y="0" width="7" height="1"></rect><rect x="3" y="1" width="9" height="1"></rect><rect x="2" y="2" width="11" height="1"></rect><rect x="2" y="3" width="2" height="1"></rect><rect x="5" y="3" width="5" height="1"></rect><rect x="11" y="3" width="2" height="1"></rect><rect x="0" y="4" width="15" height="1"></rect><rect x="2" y="5" width="2" height="1"></rect><rect x="5" y="5" width="5" height="1"></rect><rect x="11" y="5" width="2" height="1"></rect>
-          </svg>
-        </div>
-
-        <h1 class="text-[14vw] md:text-[10vw] leading-none text-white text-center flex flex-col items-center select-none">
-          <span class="text-[#00ff41] drop-shadow-[0_0_15px_rgba(0,255,65,0.3)]">nexus</span>
-          <div class="flex items-center -mt-2 md:-mt-6">
-            <span>p</span>
-            <div class="w-[12vw] h-[12vw] md:w-[8vw] md:h-[8vw] mx-2 md:mx-4 animate-[float-ship_3s_ease-in-out_infinite]">
+      <h1 id="mainTitle"
+        class="text-[14vw] md:text-[10vw] leading-none text-white text-center flex flex-col items-center select-none transition-opacity duration-1000">
+        <span class="text-[#00ff41] drop-shadow-[0_0_15px_rgba(0,255,65,0.3)]">nexus</span>
+        <div class="flex items-center -mt-2 md:-mt-6">
+          <span>p</span>
+          <div id="logoShipWrapper"
+            class="w-[12vw] h-[12vw] md:w-[8vw] md:h-[8vw] mx-2 md:mx-4 relative flex items-center justify-center">
+            <div id="logoShip" class="w-full h-full animate-[float-ship_3s_ease-in-out_infinite] z-50">
               <svg viewBox="0 0 16 16" class="w-full h-full drop-shadow-[0_0_12px_rgba(0,255,65,0.5)]">
-                <rect x="7" y="0" width="2" height="4" fill="#ffffff"></rect><rect x="6" y="4" width="4" height="6" fill="#00ff41"></rect><rect x="4" y="6" width="8" height="4" fill="#00ff41"></rect><rect x="2" y="10" width="12" height="2" fill="#008f11"></rect><rect x="0" y="12" width="4" height="4" fill="#ff0055"></rect><rect x="12" y="12" width="4" height="4" fill="#ff0055"></rect><rect x="7" y="10" width="2" height="6" fill="#00ff41"></rect>
+                <rect x="7" y="0" width="2" height="4" fill="#ffffff"></rect>
+                <rect x="6" y="4" width="4" height="6" fill="#00ff41"></rect>
+                <rect x="4" y="6" width="8" height="4" fill="#00ff41"></rect>
+                <rect x="2" y="10" width="12" height="2" fill="#008f11"></rect>
+                <rect x="0" y="12" width="4" height="4" fill="#ff0055"></rect>
+                <rect x="12" y="12" width="4" height="4" fill="#ff0055"></rect>
+                <rect x="7" y="10" width="2" height="6" fill="#00ff41"></rect>
               </svg>
             </div>
-            <span>m</span>
           </div>
-        </h1>
-
-        <div class="mt-12 flex flex-wrap gap-3 justify-center">
-          <a href="/" class="border border-white/40 px-4 py-2 text-white hover:bg-white/10">[HOME]</a>
-          <a href="/dashboard.html" class="border border-[#00ff41] px-4 py-2 text-[#00ff41] hover:bg-[#00ff41]/15">[DASHBOARD]</a>
-          <a href="/projects.html" class="border border-amber-400 px-4 py-2 text-amber-400 hover:bg-amber-400/15">[PROJECTS]</a>
-          <a href="/activity.html" class="border border-[#ff0055] px-4 py-2 text-[#ff73a2] hover:bg-[#ff0055]/15">[ACTIVITY]</a>
+          <span>m</span>
         </div>
+      </h1>
 
-      </main>
+      <div id="bottomLinks" class="mt-12 flex flex-wrap gap-3 justify-center transition-opacity duration-1000">
+        <a href="/index.html" class="border border-white/40 px-4 py-2 text-white hover:bg-white/10">[HOME]</a>
+        <a href="/dashboard.html"
+          class="border border-[#00ff41] px-4 py-2 text-[#00ff41] hover:bg-[#00ff41]/15">[DASHBOARD]</a>
+        <a href="/projects.html"
+          class="border border-amber-400 px-4 py-2 text-amber-400 hover:bg-amber-400/15">[PROJECTS]</a>
+        <a href="/activity.html"
+          class="border border-[#ff0055] px-4 py-2 text-[#ff73a2] hover:bg-[#ff0055]/15">[ACTIVITY]</a>
+        <button
+          onclick="localStorage.removeItem('nexus_token');localStorage.removeItem('nexus_user');window.location.href='/login.html'"
+          class="border border-red-500/60 px-4 py-2 text-red-400 hover:bg-red-500/15">[LOGOUT]</button>
+      </div>
+    </main>
+
+    <div id="gameUI"
+      class="fixed inset-0 pointer-events-none z-40 opacity-0 transition-opacity duration-1000 hidden items-center justify-between px-10">
+      <div class="text-[#00ff41] text-lg mt-20">SCORE: <span id="gameScore">0</span></div>
+      <div class="text-[#00ff41] text-sm mt-20 opacity-50">[PRESS ESC TO EXIT]</div>
     </div>
-  </body>
+
+    <!-- Space Invaders Game Zone -->
+    <div id="enemyZone" class="fixed inset-0 z-30 pointer-events-none overflow-hidden">
+      <!-- Enemies will be spawned here -->
+    </div>
+  </div>
+
+  <script src="/auth-guard.js"></script>
+  <script src="/chatbot.js"></script>
+  <script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playShootSound() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.1);
+    }
+
+    function playExplosionSound() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.2);
+    }
+
+    const ship = document.getElementById('logoShip');
+    const wrapper = document.getElementById('logoShipWrapper');
+    const enemyZone = document.getElementById('enemyZone');
+    const gameUI = document.getElementById('gameUI');
+
+    const fadeEls = [
+      document.getElementById('topNav'),
+      document.getElementById('mainTitle'),
+      document.getElementById('bottomLinks'),
+      document.getElementById('topEnemy')
+    ];
+
+    let isDetached = false;
+    let gameActive = false;
+    let mouseX = window.innerWidth / 2;
+    let score = 0;
+    let gameScoreEl = document.getElementById('gameScore');
+
+    let enemies = [];
+    let spawnInterval;
+
+    const invaderSVG = `<svg width="100%" height="100%" viewBox="0 0 15 10" fill="#ff0055" class="drop-shadow-[0_0_8px_rgba(255,0,85,0.6)]">
+        <rect x="4" y="0" width="7" height="1"></rect><rect x="3" y="1" width="9" height="1"></rect><rect x="2" y="2" width="11" height="1"></rect><rect x="2" y="3" width="2" height="1"></rect><rect x="5" y="3" width="5" height="1"></rect><rect x="11" y="3" width="2" height="1"></rect><rect x="0" y="4" width="15" height="1"></rect><rect x="2" y="5" width="2" height="1"></rect><rect x="5" y="5" width="5" height="1"></rect><rect x="11" y="5" width="2" height="1"></rect>
+      </svg>`;
+
+    function startEnemySpawner() {
+      if (spawnInterval) clearInterval(spawnInterval);
+      score = 0;
+      gameScoreEl.innerText = score;
+      enemyZone.innerHTML = '';
+      enemies = [];
+
+      spawnInterval = setInterval(() => {
+        if (!gameActive) return;
+
+        const el = document.createElement('div');
+        el.className = 'absolute w-12 h-10 transition-transform duration-1000';
+        el.innerHTML = invaderSVG;
+
+        const maxLeft = window.innerWidth - 60;
+        const left = Math.random() * maxLeft;
+        // Spawn enemies at top of screen
+        let y = -50;
+
+        el.style.left = left + 'px';
+        el.style.top = y + 'px';
+        enemyZone.appendChild(el);
+
+        enemies.push({ el, x: left, y: y, active: true, speed: 2 + Math.random() * 3 });
+      }, 800); // spawn one every ~0.8s
+    }
+
+    function stopEnemySpawner() {
+      if (spawnInterval) clearInterval(spawnInterval);
+      enemies.forEach(e => e.el.remove());
+      enemies = [];
+    }
+
+    function startGame() {
+      if (isDetached) return;
+      isDetached = true;
+      gameActive = true;
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      const rect = wrapper.getBoundingClientRect();
+
+      ship.style.position = 'fixed';
+      ship.style.left = rect.left + 'px';
+      ship.style.top = rect.top + 'px';
+      ship.style.width = rect.width + 'px';
+      ship.style.height = rect.height + 'px';
+      ship.style.margin = '0';
+      ship.classList.remove('animate-[float-ship_3s_ease-in-out_infinite]');
+
+      void ship.offsetWidth;
+
+      ship.style.transition = 'all 0.8s cubic-bezier(0.25, 1, 0.5, 1)';
+      ship.style.top = 'calc(100vh - 100px)';
+      ship.style.left = '50%';
+      ship.style.transform = 'translateX(-50%) scale(0.8)';
+
+      fadeEls.forEach(el => el.classList.add('opacity-0'));
+
+      gameUI.classList.remove('hidden');
+      setTimeout(() => gameUI.classList.remove('opacity-0'), 100);
+
+      startEnemySpawner();
+    }
+
+    function stopGame() {
+      if (!isDetached) return;
+      isDetached = false;
+      gameActive = false;
+
+      const rect = wrapper.getBoundingClientRect();
+
+      ship.style.transition = 'all 0.6s cubic-bezier(0.5, 0, 0.2, 1)';
+      ship.style.top = rect.top + 'px';
+      ship.style.left = rect.left + 'px';
+      ship.style.width = rect.width + 'px';
+      ship.style.height = rect.height + 'px';
+      ship.style.transform = 'none';
+
+      fadeEls.forEach(el => el.classList.remove('opacity-0'));
+
+      gameUI.classList.add('opacity-0');
+      setTimeout(() => gameUI.classList.add('hidden'), 1000);
+      stopEnemySpawner();
+
+      setTimeout(() => {
+        if (!isDetached) {
+          ship.style.position = 'static';
+          ship.style.transition = 'none';
+          ship.classList.add('animate-[float-ship_3s_ease-in-out_infinite]');
+        }
+      }, 600);
+    }
+
+    // Detach trigger via mouse wheel
+    window.addEventListener('wheel', (e) => {
+      if (e.deltaY > 0 && !isDetached) {
+        startGame();
+      }
+    });
+
+    // Detach trigger via touch swipe up
+    let touchStartY = 0;
+    window.addEventListener('touchstart', e => touchStartY = e.touches[0].clientY);
+    window.addEventListener('touchmove', e => {
+      const touchY = e.touches[0].clientY;
+      if (touchStartY - touchY > 50 && !isDetached) {
+        startGame();
+      }
+    });
+
+    // Exit via escape key
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') stopGame();
+    });
+
+    // Mouse control for ship
+    window.addEventListener('mousemove', (e) => {
+      if (!gameActive) return;
+      mouseX = e.clientX;
+      ship.style.transition = 'none';
+      ship.style.left = mouseX + 'px';
+    });
+
+    // Allow touch control too
+    window.addEventListener('touchmove', (e) => {
+      if (!gameActive) return;
+      mouseX = e.touches[0].clientX;
+      ship.style.transition = 'none';
+      ship.style.left = mouseX + 'px';
+    });
+
+    // Firing lasers automatically
+    setInterval(() => {
+      if (!gameActive) return;
+
+      playShootSound();
+
+      const laser = document.createElement('div');
+      laser.className = 'fixed w-1 h-6 bg-[#00ff41] shadow-[0_0_10px_#00ff41] z-40';
+      laser.style.left = mouseX + 'px';
+      laser.style.top = 'calc(100vh - 110px)';
+      document.body.appendChild(laser);
+
+      // Custom animation to check collisions
+      const startY = window.innerHeight - 110;
+      let y = startY;
+
+      const bulletInt = setInterval(() => {
+        y -= 15;
+        laser.style.top = y + 'px';
+
+        if (y < -50) {
+          clearInterval(bulletInt);
+          laser.remove();
+          return;
+        }
+
+        // Check collision with enemies
+        enemies.forEach(en => {
+          if (!en.active) return;
+          const enemyRect = en.el.getBoundingClientRect();
+
+          if (
+            mouseX > enemyRect.left &&
+            mouseX < enemyRect.right &&
+            y > enemyRect.top &&
+            y < enemyRect.bottom
+          ) {
+            en.active = false;
+            playExplosionSound();
+            en.el.style.animation = 'explosion 0.4s forwards';
+            clearInterval(bulletInt);
+            laser.remove();
+            score += 100;
+            gameScoreEl.innerText = score;
+            setTimeout(() => en.el.style.display = 'none', 400);
+          }
+        });
+
+      }, 16);
+
+    }, 250);
+
+    // Enemy movement
+    let time = 0;
+    setInterval(() => {
+      if (!gameActive) return;
+      time += 0.05;
+      enemies.forEach((en, i) => {
+        if (!en.active) return;
+        en.y += en.speed; // move downwards
+        if (en.y > window.innerHeight) {
+          // enemy reached bottom
+          en.active = false;
+          en.el.style.display = 'none';
+          score = Math.max(0, score - 50);
+          gameScoreEl.innerText = score;
+          return;
+        }
+        const offsetX = Math.sin(time + i * 0.5) * 40;
+        en.el.style.transform = `translate(${offsetX}px, 0)`;
+        en.el.style.top = en.y + 'px';
+      });
+    }, 30);
+
+  </script>
+</body>
+
 </html>
