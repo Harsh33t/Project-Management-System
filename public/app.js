@@ -370,3 +370,78 @@ window.addEventListener("keydown", (e) => {
     document.getElementById("phyToggle").click();
   }
 });
+
+// ═══════════════════════════════════════════════════════
+// TACTICAL STARMAP ENGINE
+// ═══════════════════════════════════════════════════════
+let viewMode = "LIST";
+function renderStarmap() {
+  const canvas = $("#starmapCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+
+  const projects = [...st.projects];
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Draw orbits
+  ctx.strokeStyle = "rgba(0, 217, 255, 0.1)";
+  for(let i=1; i<=5; i++) {
+    ctx.beginPath(); ctx.arc(centerX, centerY, i * 60, 0, Math.PI * 2); ctx.stroke();
+  }
+
+  projects.forEach((p, i) => {
+    const angle = (i / projects.length) * Math.PI * 2 + (Date.now() * 0.0002);
+    const dist = 60 + (i % 5) * 60;
+    const x = centerX + Math.cos(angle) * dist;
+    const y = centerY + Math.sin(angle) * dist;
+    p._starmap_pos = { x, y };
+
+    ctx.fillStyle = p.status === 'completed' ? "var(--g)" : p.status === 'active' ? "var(--c)" : "var(--y)";
+    ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.font = "10px 'Press Start 2P'";
+    ctx.fillText(p.title.substring(0, 10), x + 10, y + 5);
+  });
+
+  if (viewMode === "STARMAP") requestAnimationFrame(renderStarmap);
+}
+
+$("#viewModeToggle")?.addEventListener("click", (e) => {
+  viewMode = viewMode === "LIST" ? "STARMAP" : "LIST";
+  e.target.textContent = `MODE: ${viewMode}`;
+  const list = $("#projects");
+  const map = $("#starmapPanel");
+  if (viewMode === "STARMAP") {
+    list.style.display = "none";
+    map.style.display = "block";
+    renderStarmap();
+    SFX.confirm();
+  } else {
+    list.style.display = "block";
+    map.style.display = "none";
+    SFX.click();
+  }
+});
+
+$("#starmapCanvas")?.addEventListener("click", (e) => {
+  const rect = e.target.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const hit = st.projects.find(p => p._starmap_pos && Math.hypot(p._starmap_pos.x - mx, p._starmap_pos.y - my) < 15);
+  if (hit) {
+    showToast(`LOCKING ON: ${hit.title}`, "info");
+    const el = document.querySelector(`.project-card[data-id="${hit.id}"]`) || document.getElementById(`briefing_${hit.id}`)?.parentElement;
+    if (el) {
+       viewMode = "LIST";
+       $("#viewModeToggle").textContent = "MODE: LIST";
+       $("#projects").style.display = "block";
+       $("#starmapPanel").style.display = "none";
+       el.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+});

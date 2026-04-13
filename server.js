@@ -183,8 +183,9 @@ function readDb() {
   if (!Array.isArray(db.users) || !db.users.length) db.users = defaultUsers;
   if (!Array.isArray(db.accounts)) db.accounts = [];
   
-  // Ensure XP exists
+  // Ensure XP and messages array exists
   db.accounts.forEach(a => { if (a.xp === undefined) a.xp = 0; });
+  if (!db.messages) db.messages = [];
   db.projects = (db.projects || []).map((p) => ({
     createdAt: p.createdAt || new Date().toISOString(),
     attachments: Array.isArray(p.attachments) ? p.attachments : [],
@@ -1064,6 +1065,28 @@ app.get("/api/projects/:projectId/export", (req, res) => {
 // Serve login as the landing page for root
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "login.html"));
+});
+
+app.get("/api/comms", (req, res) => {
+  const db = readDb();
+  res.json(db.messages.slice(-50));
+});
+
+app.post("/api/comms", (req, res) => {
+  const { text } = req.body;
+  if (!text) return res.status(400).json({ error: "No signal detected." });
+  const db = readDb();
+  const userName = getActor(req, db);
+  const msg = {
+    id: id("msg"),
+    text,
+    user: userName,
+    timestamp: new Date().toISOString()
+  };
+  db.messages.push(msg);
+  if (db.messages.length > 100) db.messages = db.messages.slice(-100);
+  writeDb(db);
+  res.json(msg);
 });
 
 /* ═══════════════════════════════════════════════════════

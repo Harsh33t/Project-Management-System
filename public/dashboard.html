@@ -30,7 +30,7 @@
 
     <main class="page-root">
       <div class="content-wrap">
-        <section class="panel" style="border-color: var(--c); background: rgba(0,217,255,0.05);">
+        <section class="panel" style="border-color: var(--c); background: rgba(0,217,255,0.05); margin-bottom: 30px;">
           <h2 class="page-title" style="color: var(--c);">▸ PILOT PROFILE</h2>
           <div id="pilotProfile" style="display: flex; gap: 20px; align-items: center; min-height: 80px;">
             <div style="flex:1">
@@ -55,6 +55,15 @@
           <div style="margin-top: 10px;">
             <button id="pomoStart" style="border-color:var(--m); color:var(--m);">ENGAGE</button>
             <button id="pomoReset" style="border-color:var(--m); color:var(--m);">RESET</button>
+          </div>
+        </section>
+
+        <section class="panel" style="border-color: var(--y); background: rgba(255,165,0,0.05);">
+          <h2 class="page-title" style="color: var(--y);">▸ SQUAD COMMS [ ENCRYPTED_CHANNEL ]</h2>
+          <div id="commsBox" style="height: 200px; overflow-y: auto; border: 1px solid rgba(255,165,0,0.1); margin-bottom: 10px; padding: 10px; font-family: 'VT323'; font-size: 1rem; color: var(--y); background:rgba(0,0,0,0.2);"></div>
+          <div style="display:flex; gap:10px;">
+            <input id="commsInput" placeholder="TRANSMIT MESSAGE..." style="flex:1; border-color:var(--y); color:var(--y);" />
+            <button id="commsSend" style="border-color:var(--y); color:var(--y);">SEND</button>
           </div>
         </section>
 

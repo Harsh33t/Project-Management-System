@@ -106,6 +106,49 @@ async function api(url) {
       updatePomo();
       SFX.click();
     });
+
+    // ═══════════════════════════════════════════════════════
+    // SQUAD COMMS ENGINE
+    // ═══════════════════════════════════════════════════════
+    const commsBox = document.getElementById("commsBox");
+    const commsInput = document.getElementById("commsInput");
+    const commsSend = document.getElementById("commsSend");
+
+    let lastMsgId = "";
+    const loadMessages = async () => {
+      try {
+        const msgs = await api("/api/comms");
+        if (msgs.length && msgs[msgs.length-1].id !== lastMsgId) {
+          commsBox.innerHTML = msgs.map(m => `
+            <div style="margin-bottom:8px; border-left:2px solid var(--y); padding-left:8px;">
+              <span style="opacity:0.6; font-size:0.7rem;">[${new Date(m.timestamp).toLocaleTimeString()}]</span>
+              <span style="color:#fff; margin-right:5px;">&lt;${m.user}&gt;</span>
+              <span>${esc(m.text)}</span>
+            </div>
+          `).join("");
+          commsBox.scrollTop = commsBox.scrollHeight;
+          lastMsgId = msgs[msgs.length-1].id;
+          if (document.visibilityState === 'visible') SFX.play(2000, 0.05, "sine");
+        }
+      } catch(e) {}
+    };
+
+    const sendMsg = async () => {
+      const text = commsInput.value.trim();
+      if (!text) return;
+      commsInput.value = "";
+      try {
+        await api("/api/comms", { method: "POST", body: JSON.stringify({ text }) });
+        loadMessages();
+      } catch(e) { showToast("SIGNAL JAMMED. RETRY.", "error"); }
+    };
+
+    commsSend.addEventListener("click", sendMsg);
+    commsInput.addEventListener("keydown", (e) => { if(e.key === "Enter") sendMsg(); });
+    
+    loadMessages();
+    setInterval(loadMessages, 3000);
+
   } catch (err) {
     console.error("Tactical link failure:", err);
   }
