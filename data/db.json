@@ -1,24 +1,21 @@
 {
-  "projects": [
-    {
-      "createdAt": "2026-04-11T10:12:31.052Z",
-      "attachments": [],
-      "tasks": [],
-      "id": "p_1775902351052_4020",
-      "title": "QUANTUM",
-      "description": "",
-      "status": "active",
-      "deadline": "2026-04-17"
-    }
-  ],
+  "projects": [],
   "activity": [
     {
+      "id": "a_1776064661579_4709",
+      "message": "Project \"QUANTUM\" deleted",
+      "timestamp": "2026-04-13T07:17:41.580Z",
+      "action": "deleted",
+      "projectId": "p_1775902351052_4020",
+      "userName": "PLAYER_1"
+    },
+    {
+      "action": "created",
+      "userName": "HARSHEET",
+      "projectId": "",
       "id": "a_1775904840546_3330",
       "message": "New operative \"HARSHEET\" enlisted",
-      "timestamp": "2026-04-11T10:54:00.546Z",
-      "action": "created",
-      "projectId": "",
-      "userName": "HARSHEET"
+      "timestamp": "2026-04-11T10:54:00.546Z"
     },
     {
       "action": "deleted",
