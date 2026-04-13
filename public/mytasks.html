@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS — My Operations</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" /><link rel="stylesheet" href="/chatbot.css" />
+  <style>
+    .filter-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
+    .filter-btn { font-family:'Press Start 2P'; font-size:.5rem; padding:5px 12px; border:1px solid var(--g-dim); color:rgba(255,255,255,.5); background:transparent; cursor:pointer; transition:.15s; }
+    .filter-btn.active, .filter-btn:hover { border-color:var(--g); color:var(--g); background:rgba(0,255,65,.06); }
+    .mytask-card {
+      border:1px solid var(--g-dim); padding:12px 16px; margin-bottom:8px;
+      display:flex; align-items:center; gap:12px; transition:.15s; cursor:pointer;
+      background:rgba(0,0,0,.3);
+    }
+    .mytask-card:hover { border-color:var(--g); background:rgba(0,255,65,.04); }
+    .mytask-pri { width:6px; height:40px; flex-shrink:0; border-radius:2px; }
+    .mytask-pri.high { background:#ff3d3d; box-shadow:0 0 8px #ff3d3d55; }
+    .mytask-pri.medium { background:var(--y); box-shadow:0 0 8px rgba(255,215,0,.3); }
+    .mytask-pri.low { background:var(--g); box-shadow:0 0 8px rgba(0,255,65,.3); }
+    .mytask-pri.urgent { background:var(--m); box-shadow:0 0 8px rgba(255,79,216,.3); }
+    .mytask-body { flex:1; min-width:0; }
+    .mytask-title { font-family:'Press Start 2P'; font-size:.6rem; color:#fff; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .mytask-meta { font-family:'VT323'; font-size:.85rem; color:rgba(255,255,255,.45); display:flex; gap:12px; flex-wrap:wrap; }
+    .mytask-project { font-family:'VT323'; font-size:.8rem; padding:2px 8px; border:1px solid; }
+    .mytask-due { color:var(--y); }
+    .mytask-due.overdue { color:var(--r); animation:blink 1s step-end infinite; }
+    .mytask-done-btn { font-family:'Press Start 2P'; font-size:.45rem; padding:5px 10px; border:1px solid var(--g); color:var(--g); background:transparent; cursor:pointer; flex-shrink:0; }
+    .mytask-done-btn:hover { background:rgba(0,255,65,.12); }
+    .stats-bar { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px; }
+    .stat-box { border:1px solid var(--g-dim); padding:12px; text-align:center; }
+    .stat-val { font-family:'Press Start 2P'; font-size:1.2rem; color:var(--g); display:block; }
+    .stat-lbl { font-size:.65rem; color:rgba(255,255,255,.4); margin-top:4px; font-family:'VT323'; }
+    #searchInput { font-size:.75rem; padding:6px 12px; background:transparent; border:1px solid var(--g-dim); color:#fff; font-family:'VT323'; width:100%; max-width:300px; }
+    #searchInput:focus { outline:none; border-color:var(--g); }
+    .sort-sel { background:#000; border:1px solid var(--g-dim); color:rgba(255,255,255,.6); font-family:'VT323'; font-size:.85rem; padding:4px 8px; cursor:pointer; }
+    .progress-bar-mini { height:3px; background:var(--g-dim); margin-top:6px; border-radius:1px; }
+    .progress-fill-mini { height:100%; background:var(--g); border-radius:1px; transition:width .3s; }
+  </style>
+</head>
+<body>
+<nav class="navbar"><div class="navbar-inner">
+  <div class="logo-wrapper" onclick="window.location.href='/index.html'" style="cursor:pointer;display:flex;align-items:center;gap:8px;">
+    <span style="color:var(--g);font-size:1.25rem;">NEXUS</span>
+    <span style="display:flex;align-items:center;gap:4px;font-size:1.25rem;">P<svg style="width:1.2rem;height:1.2rem" viewBox="0 0 16 16"><rect x="7" y="0" width="2" height="4" fill="#fff"/><rect x="6" y="4" width="4" height="6" fill="#00ff41"/><rect x="4" y="6" width="8" height="4" fill="#00ff41"/><rect x="2" y="10" width="12" height="2" fill="#008f11"/><rect x="0" y="12" width="4" height="4" fill="#ff0055"/><rect x="12" y="12" width="4" height="4" fill="#ff0055"/></svg>M</span>
+  </div>
+  <div class="nav-right">
+    <a class="nav-link" href="/dashboard.html">[DASHBOARD]</a>
+    <a class="nav-link" href="/projects.html">[PROJECTS]</a>
+    <a class="nav-link" href="/calendar.html">[CALENDAR]</a>
+    <a class="nav-link active" href="/mytasks.html">[MY TASKS]</a>
+    <a class="nav-link" href="/teams.html">[SQUADS]</a>
+    <div id="currentUserSelect" class="nav-link" style="border-color:var(--y);color:var(--y);pointer-events:none;padding:6px 12px;"></div>
+    <button style="border-color:#ff3d3d;color:#ff8a8a;font-size:.65rem;padding:6px 12px" onclick="localStorage.removeItem('nexus_token');localStorage.removeItem('nexus_user');window.location.href='/login.html'">[LOGOUT]</button>
+  </div>
+</div></nav>
+
+<main class="page-root"><div class="content-wrap">
+
+  <section class="panel" style="margin-bottom:12px">
+    <h1 class="page-title">▸ MY OPERATIONS</h1>
+    <div class="stats-bar" id="statsBar">
+      <div class="stat-box"><span class="stat-val" id="stTotal">-</span><div class="stat-lbl">TOTAL ASSIGNED</div></div>
+      <div class="stat-box" style="border-color:#ff3d3d44"><span class="stat-val" id="stOverdue" style="color:#ff3d3d">-</span><div class="stat-lbl">OVERDUE</div></div>
+      <div class="stat-box" style="border-color:var(--y)44"><span class="stat-val" id="stDue" style="color:var(--y)">-</span><div class="stat-lbl">DUE TODAY</div></div>
+      <div class="stat-box" style="border-color:rgba(0,217,255,.3)"><span class="stat-val" id="stCompleted" style="color:var(--c)">-</span><div class="stat-lbl">DONE THIS WEEK</div></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="filter-row">
+      <input id="searchInput" placeholder="SEARCH OPERATIONS..." oninput="render()" />
+      <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">ALL</button>
+      <button class="filter-btn" data-filter="urgent" onclick="setFilter('urgent',this)">URGENT</button>
+      <button class="filter-btn" data-filter="high" onclick="setFilter('high',this)">HIGH</button>
+      <button class="filter-btn" data-filter="overdue" onclick="setFilter('overdue',this)">OVERDUE</button>
+      <button class="filter-btn" data-filter="today" onclick="setFilter('today',this)">TODAY</button>
+      <select class="sort-sel" id="sortSel" onchange="render()">
+        <option value="due">SORT: DUE DATE</option>
+        <option value="priority">SORT: PRIORITY</option>
+        <option value="project">SORT: PROJECT</option>
+      </select>
+    </div>
+    <div id="taskList"></div>
+  </section>
+
+</div></main>
+
+<script src="/auth-guard.js"></script>
+<script src="/chatbot.js"></script>
+<script>
+const me = JSON.parse(localStorage.getItem('nexus_user')||'{}');
+const username = me.username||me.name||'OPERATIVE';
+document.getElementById('currentUserSelect').textContent = `[ ${username} ]`;
+const token = ()=>localStorage.getItem('nexus_token');
+const esc = s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+let ALL_TASKS = []; let activeFilter = 'all';
+const PRIO_ORDER = { urgent:0, high:1, medium:2, low:3 };
+const today = new Date(); today.setHours(0,0,0,0);
+
+function setFilter(f, btn) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+async function load() {
+  const res = await fetch('/api/mytasks', { headers:{ 'x-user':username,'Authorization':`Bearer ${token()}` } });
+  ALL_TASKS = await res.json();
+  // Stats
+  const todayStr = today.toISOString().slice(0,10);
+  const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate()-7);
+  document.getElementById('stTotal').textContent = ALL_TASKS.length;
+  document.getElementById('stOverdue').textContent = ALL_TASKS.filter(t=>t.dueDate && new Date(t.dueDate)<today).length;
+  document.getElementById('stDue').textContent = ALL_TASKS.filter(t=>t.dueDate && t.dueDate.slice(0,10)===todayStr).length;
+  // completed this week - from all projects
+  const allRes = await fetch('/api/projects', { headers:{ 'x-user':username,'Authorization':`Bearer ${token()}` } });
+  const projs = await allRes.json();
+  let doneCount = 0;
+  projs.forEach(p=>(p.tasks||[]).forEach(t=>{ if(t.completed && t.doneAt && new Date(t.doneAt)>=weekAgo) doneCount++; }));
+  document.getElementById('stCompleted').textContent = doneCount;
+  render();
+}
+
+function render() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const sort = document.getElementById('sortSel').value;
+  let tasks = ALL_TASKS.filter(t=>{
+    if(search && !t.title.toLowerCase().includes(search) && !(t.projectTitle||'').toLowerCase().includes(search)) return false;
+    if(activeFilter==='urgent') return (t.priority||'').toLowerCase()==='urgent';
+    if(activeFilter==='high') return (t.priority||'').toLowerCase()==='high';
+    if(activeFilter==='overdue') return t.dueDate && new Date(t.dueDate)<today;
+    if(activeFilter==='today') return t.dueDate && t.dueDate.slice(0,10)===today.toISOString().slice(0,10);
+    return true;
+  });
+  if(sort==='priority') tasks.sort((a,b)=>(PRIO_ORDER[a.priority]||2)-(PRIO_ORDER[b.priority]||2));
+  else if(sort==='project') tasks.sort((a,b)=>(a.projectTitle||'').localeCompare(b.projectTitle||''));
+  else tasks.sort((a,b)=>{ if(!a.dueDate)return 1; if(!b.dueDate)return -1; return new Date(a.dueDate)-new Date(b.dueDate); });
+
+  const el = document.getElementById('taskList');
+  if(!tasks.length) { el.innerHTML=`<div class="empty-state">[ NO OPERATIONS MATCH FILTERS ] <span class="blink">_</span></div>`; return; }
+
+  el.innerHTML = tasks.map(t=>{
+    const pri = (t.priority||'medium').toLowerCase();
+    const due = t.dueDate ? new Date(t.dueDate) : null;
+    const isOverdue = due && due < today && !t.completed;
+    const dueLabel = due ? `${isOverdue?'⚠ OVERDUE:':''} ${t.dueDate}` : 'NO DUE DATE';
+    const checks = t.checklist||[];
+    const checkDone = checks.filter(c=>c.done).length;
+    const checkPct = checks.length ? Math.round(checkDone/checks.length*100) : null;
+    const projColor = t.projectColor || '#00ff41';
+    return `<div class="mytask-card" onclick="window.location.href='/projects.html#${t.projectId}'">
+      <div class="mytask-pri ${pri}"></div>
+      <div class="mytask-body">
+        <div class="mytask-title">${esc(t.title)}</div>
+        <div class="mytask-meta">
+          <span class="mytask-project" style="border-color:${projColor};color:${projColor}">${esc(t.projectTitle||'UNKNOWN')}</span>
+          <span class="mytask-due ${isOverdue?'overdue':''}">${esc(dueLabel)}</span>
+          <span style="color:rgba(255,255,255,.4)">${(t.status||'todo').toUpperCase()}</span>
+          ${checks.length ? `<span style="color:var(--c)">☑ ${checkDone}/${checks.length}</span>` : ''}
+        </div>
+        ${checkPct!==null ? `<div class="progress-bar-mini"><div class="progress-fill-mini" style="width:${checkPct}%"></div></div>` : ''}
+      </div>
+      <button class="mytask-done-btn" onclick="markDone(event,'${t.projectId}','${t.id}',this)">DONE ✓</button>
+    </div>`;
+  }).join('');
+}
+
+async function markDone(e, pid, tid, btn) {
+  e.stopPropagation();
+  btn.textContent = '...'; btn.disabled=true;
+  await fetch(`/api/projects/${pid}/tasks/${tid}`, {
+    method:'PUT', headers:{ 'Content-Type':'application/json','x-user':username,'Authorization':`Bearer ${token()}` },
+    body: JSON.stringify({ completed:true, status:'done' })
+  });
+  load();
+}
+
+load();
+</script>
+<footer class="system-footer"><span>[ OXYGEN: 98% ]</span><span class="blink">_ ACTIVE OPERATIONS _</span></footer>
+</body></html>

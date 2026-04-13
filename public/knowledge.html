@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS PAM — Knowledge Base</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" /><link rel="stylesheet" href="/chatbot.css" />
+  <style>
+    .kb-layout { display:flex; gap:20px; min-height:500px; }
+    .kb-nav { width:250px; flex-shrink:0; border-right:1px solid var(--g-dim); padding-right:16px; overflow-y:auto; }
+    .kb-content { flex:1; padding-left:10px; }
+    .kb-article-btn { display:block; width:100%; text-align:left; background:transparent; border:none; color:rgba(255,255,255,.5); font-family:'VT323'; font-size:1.1rem; padding:8px; cursor:pointer; margin-bottom:4px; transition:.15s; }
+    .kb-article-btn:hover { background:rgba(0,255,65,.05); color:#fff; }
+    .kb-article-btn.active { color:var(--g); border-left:2px solid var(--g); background:rgba(0,0,0,.4); }
+    .kb-title { font-family:'Press Start 2P'; font-size:1.2rem; color:var(--g); margin-bottom:20px; }
+    .kb-body { font-family:'VT323'; font-size:1.1rem; color:#fff; line-height:1.6; white-space:pre-wrap; }
+    .kb-meta { font-size:.8rem; color:rgba(255,255,255,.4); border-bottom:1px dashed var(--g-dim); padding-bottom:12px; margin-bottom:16px; display:flex; justify-content:space-between; }
+    
+    #editorArea { display:none; }
+    .form-input { width:100%; background:rgba(0,0,0,.5); border:1px solid var(--g-dim); color:#fff; padding:10px; font-family:'VT323'; font-size:1rem; margin-bottom:12px; box-sizing:border-box; }
+    .form-input:focus { outline:none; border-color:var(--g); }
+    .btn-sys { background:var(--g); color:#000; border:none; padding:8px 16px; font-family:'Press Start 2P'; font-size:.5rem; cursor:pointer; margin-right:8px; }
+    .btn-del { background:transparent; border:1px solid var(--r); color:var(--r); padding:8px 16px; font-family:'Press Start 2P'; font-size:.5rem; cursor:pointer; }
+  </style>
+</head>
+<body>
+<nav class="navbar"><div class="navbar-inner">
+  <div class="logo-wrapper" onclick="window.location.href='/index.html'" style="cursor:pointer;display:flex;align-items:center;gap:8px;">
+    <span style="color:var(--g);font-size:1.25rem;">NEXUS</span>
+    <span style="display:flex;align-items:center;gap:4px;font-size:1.25rem;">P<svg style="width:1.2rem;height:1.2rem" viewBox="0 0 16 16"><rect x="7" y="0" width="2" height="4" fill="#fff"/><rect x="6" y="4" width="4" height="6" fill="#00ff41"/><rect x="4" y="6" width="8" height="4" fill="#00ff41"/><rect x="2" y="10" width="12" height="2" fill="#008f11"/><rect x="0" y="12" width="4" height="4" fill="#ff0055"/><rect x="12" y="12" width="4" height="4" fill="#ff0055"/></svg>M</span>
+  </div>
+  <div class="nav-right">
+    <a class="nav-link" href="/dashboard.html">[DASHBOARD]</a>
+    <a class="nav-link" href="/projects.html">[PROJECTS]</a>
+    <a class="nav-link active" href="/knowledge.html">[DIRECTIVES]</a>
+    <a class="nav-link" href="/automations.html">[AUTOMATIONS]</a>
+    <div id="currentUserSelect" class="nav-link" style="border-color:var(--y);color:var(--y);pointer-events:none;padding:6px 12px;"></div>
+  </div>
+</div></nav>
+
+<main class="page-root"><div class="content-wrap panel">
+  <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:24px; border-bottom:1px solid var(--c); padding-bottom:16px;">
+    <h1 class="page-title" style="color:var(--c) !important; margin:0;">▸ NEXUS DIRECTIVES (WIKI)</h1>
+    <button class="btn-sys" style="background:var(--c)" onclick="newArticle()">[+] NEW DIRECTIVE</button>
+  </div>
+  
+  <div class="kb-layout">
+    <div class="kb-nav" id="articleList"></div>
+    
+    <div class="kb-content">
+      <div id="viewArea">
+        <h2 class="kb-title" id="vTitle">SELECT DIRECTIVE</h2>
+        <div class="kb-meta" id="vMeta">Initializing Knowledge Base...</div>
+        <div class="kb-body" id="vBody">Awaiting telemetry...</div>
+      </div>
+      
+      <div id="editorArea">
+        <input type="text" class="form-input" id="eTitle" placeholder="DIRECTIVE TITLE">
+        <textarea class="form-input" id="eBody" rows="15" placeholder="CONTENT..."></textarea>
+        <div>
+          <button class="btn-sys" onclick="saveArticle()">SAVE RECORD</button>
+          <button class="btn-sys" style="background:transparent;border:1px solid var(--y);color:var(--y)" onclick="cancelEdit()">ABORT</button>
+          <button class="btn-del" id="eDel" onclick="deleteArticle()" style="float:right">PURGE</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></main>
+
+<script src="/auth-guard.js"></script><script src="/chatbot.js"></script>
+<script>
+const me = JSON.parse(localStorage.getItem('nexus_user')||'{}');
+const username = me.username||me.name||'OPERATIVE';
+document.getElementById('currentUserSelect').textContent = `[ ${username} ]`;
+const token = ()=>localStorage.getItem('nexus_token');
+const esc = s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+let ARTICLES = []; let activeId = null;
+
+async function load() {
+  const res = await fetch('/api/knowledge', {headers:{'x-user':username,'Authorization':`Bearer ${token()}`}});
+  ARTICLES = await res.json();
+  renderList();
+  if(ARTICLES.length > 0 && !activeId) viewArticle(ARTICLES[0].id);
+  else if (!ARTICLES.length) { document.getElementById('vTitle').textContent="NO DIRECTIVES FOUND"; document.getElementById('vMeta').textContent=""; document.getElementById('vBody').textContent="Repository empty."; }
+}
+
+function renderList() {
+  const list = document.getElementById('articleList');
+  list.innerHTML = ARTICLES.map(a => `
+    <button class="kb-article-btn ${a.id===activeId?'active':''}" onclick="viewArticle('${a.id}')">
+      ▸ ${esc(a.title)}
+    </button>
+  `).join('');
+}
+
+function viewArticle(id) {
+  activeId = id; renderList();
+  const a = ARTICLES.find(x => x.id === id);
+  if(!a) return;
+  document.getElementById('editorArea').style.display = 'none';
+  document.getElementById('viewArea').style.display = 'block';
+  document.getElementById('vTitle').innerHTML = esc(a.title) + ` <button style="background:transparent;border:none;color:var(--c);font-family:'VT323';cursor:pointer;font-size:.9rem" onclick="editArticle('${a.id}')">[EDIT]</button>`;
+  document.getElementById('vMeta').textContent = `AUTHOR: ${a.author} // FILED: ${a.createdAt.slice(0,10)} // UPVOTES: ${a.votes||0}`;
+  document.getElementById('vBody').textContent = a.content;
+}
+
+function newArticle() {
+  activeId = null; renderList();
+  document.getElementById('viewArea').style.display = 'none';
+  document.getElementById('editorArea').style.display = 'block';
+  document.getElementById('eTitle').value = '';
+  document.getElementById('eBody').value = '';
+  document.getElementById('eDel').style.display = 'none';
+}
+
+function editArticle(id) {
+  const a = ARTICLES.find(x => x.id === id); if(!a) return;
+  document.getElementById('viewArea').style.display = 'none';
+  document.getElementById('editorArea').style.display = 'block';
+  document.getElementById('eTitle').value = a.title;
+  document.getElementById('eBody').value = a.content;
+  document.getElementById('eDel').style.display = 'inline-block';
+}
+
+function cancelEdit() {
+  if (activeId) viewArticle(activeId);
+  else if (ARTICLES.length) viewArticle(ARTICLES[0].id);
+  else { document.getElementById('editorArea').style.display='none'; document.getElementById('viewArea').style.display='block'; }
+}
+
+async function saveArticle() {
+  const payload = { title: document.getElementById('eTitle').value, content: document.getElementById('eBody').value };
+  if(!payload.title) return;
+  const url = activeId ? \`/api/knowledge/\${activeId}\` : '/api/knowledge';
+  const method = activeId ? 'PUT' : 'POST';
+  await fetch(url, { method, headers:{'Content-Type':'application/json','x-user':username,'Authorization':`Bearer ${token()}`}, body: JSON.stringify(payload) });
+  await load(); if(!activeId) viewArticle(ARTICLES[ARTICLES.length-1].id); else viewArticle(activeId);
+}
+
+async function deleteArticle() {
+  if(!activeId || !confirm('PURGE DIRECTIVE?')) return;
+  await fetch(`/api/knowledge/${activeId}`, { method:'DELETE', headers:{'x-user':username,'Authorization':`Bearer ${token()}`} });
+  activeId = null; await load();
+}
+
+load();
+</script>
+<footer class="system-footer"><span>[ OXYGEN: 98% ]</span><span class="blink">_ DIRECTIVES LOADED _</span></footer>
+</body></html>

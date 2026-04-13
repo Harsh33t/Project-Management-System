@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS — Global Timeline</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" /><link rel="stylesheet" href="/chatbot.css" />
+  <style>
+    .gantt-wrap { display:flex; font-family:'VT323'; border:1px solid var(--g-dim); overflow:hidden; background:rgba(0,0,0,.3); height:600px; }
+    .gantt-sidebar { width:250px; flex-shrink:0; border-right:1px solid var(--g-dim); overflow-y:auto; }
+    .gantt-chart-area { flex:1; overflow-x:auto; overflow-y:hidden; display:flex; flex-direction:column; background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAJUlEQVQYV2NkYGAwYkAD////Z4QpQAkyEqsCp0H41OE1EKeBIAAAZgwI+/X4zcwAAAABJRU5ErkJggg==') repeat; }
+    .g-row { height:40px; display:flex; align-items:center; padding:0 12px; border-bottom:1px solid rgba(0,255,65,.1); box-sizing:border-box; }
+    .g-row-header { background:rgba(0,255,65,.05); border-bottom:1px solid var(--g); font-family:'Press Start 2P'; font-size:.5rem; color:var(--g); font-weight:bold; }
+    .pr-title { font-family:'Press Start 2P'; font-size:.6rem; color:var(--g); margin-bottom:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .ta-title { font-size:.9rem; color:rgba(255,255,255,.7); padding-left:16px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer;}
+    .ta-title:hover { color:#fff; }
+    .gc-header { display:flex; border-bottom:1px solid var(--g); height:40px; background:rgba(0,0,0,.8); flex-shrink:0; }
+    .gc-day { flex-shrink:0; width:40px; text-align:center; padding-top:6px; font-family:'Press Start 2P'; font-size:.45rem; color:rgba(255,255,255,.5); border-right:1px dotted rgba(255,255,255,.1); }
+    .gc-day.weekend { background:rgba(255,0,0,.05); color:var(--r); }
+    .gc-day.today { color:var(--y); font-weight:bold; background:rgba(255,215,0,.1); }
+    .gc-content { position:relative; display:flex; flex-direction:column; flex:1; }
+    .gc-row { height:40px; border-bottom:1px solid rgba(0,255,65,.1); position:relative; box-sizing:border-box; }
+    .g-bar {
+      position:absolute; top:8px; height:24px; border-radius:2px;
+      font-size:.7rem; color:#000; padding:4px 8px; font-weight:bold; white-space:nowrap; overflow:hidden;
+      box-shadow:inset 0 0 10px rgba(255,255,255,.3); transition:filter .1s; cursor:pointer; font-family:'Press Start 2P'; font-size:0.45rem; line-height:2.5; align-items:center; display:flex;
+    }
+    .g-bar:hover { filter:brightness(1.5); }
+    .g-milestone {
+      position:absolute; top:10px; width:20px; height:20px; background:var(--m);
+      transform:rotate(45deg); box-shadow:0 0 10px var(--m); cursor:pointer;
+    }
+    #gDateControls { margin-bottom:12px; display:flex; gap:12px; align-items:center; }
+    .g-btn { background:transparent; border:1px solid var(--g); color:var(--g); font-family:'Press Start 2P'; font-size:.5rem; padding:6px 12px; cursor:pointer; }
+    .g-btn:hover { background:rgba(0,255,65,.1); }
+  </style>
+</head>
+<body>
+<nav class="navbar"><div class="navbar-inner">
+  <div class="logo-wrapper" onclick="window.location.href='/index.html'" style="cursor:pointer;display:flex;align-items:center;gap:8px;">
+    <span style="color:var(--g);font-size:1.25rem;">NEXUS</span>
+    <span style="display:flex;align-items:center;gap:4px;font-size:1.25rem;">P<svg style="width:1.2rem;height:1.2rem" viewBox="0 0 16 16"><rect x="7" y="0" width="2" height="4" fill="#fff"/><rect x="6" y="4" width="4" height="6" fill="#00ff41"/><rect x="4" y="6" width="8" height="4" fill="#00ff41"/><rect x="2" y="10" width="12" height="2" fill="#008f11"/><rect x="0" y="12" width="4" height="4" fill="#ff0055"/><rect x="12" y="12" width="4" height="4" fill="#ff0055"/></svg>M</span>
+  </div>
+  <div class="nav-right">
+    <a class="nav-link" href="/dashboard.html">[DASHBOARD]</a>
+    <a class="nav-link" href="/projects.html">[PROJECTS]</a>
+    <a class="nav-link active" href="/gantt.html">[TIMELINE]</a>
+    <a class="nav-link" href="/sprints.html">[SPRINTS]</a>
+    <a class="nav-link" href="/mytasks.html">[MY TASKS]</a>
+    <div id="currentUserSelect" class="nav-link" style="border-color:var(--y);color:var(--y);pointer-events:none;padding:6px 12px;"></div>
+  </div>
+</div></nav>
+
+<main class="page-root"><div class="content-wrap">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px;">
+    <h1 class="page-title" style="margin:0;">▸ GLOBAL TIMELINE</h1>
+    <div id="gDateControls">
+      <button class="g-btn" onclick="panDays(-14)">◀ -14D</button>
+      <span id="gRangeLab" style="font-family:'Press Start 2P';font-size:.6rem;color:var(--y)"></span>
+      <button class="g-btn" onclick="panDays(14)">+14D ▶</button>
+    </div>
+  </div>
+
+  <div class="gantt-wrap">
+    <div class="gantt-sidebar" id="gSide">
+      <div class="g-row g-row-header">OPERATIONS</div>
+      <!-- List inject -->
+    </div>
+    <div class="gantt-chart-area" id="gScroll">
+      <div class="gc-header" id="gHead"></div>
+      <div class="gc-content" id="gBody"></div>
+    </div>
+  </div>
+</div></main>
+
+<script src="/auth-guard.js"></script>
+<script src="/chatbot.js"></script>
+<script>
+const me = JSON.parse(localStorage.getItem('nexus_user')||'{}');
+const username = me.username||me.name||'OPERATIVE';
+document.getElementById('currentUserSelect').textContent = `[ ${username} ]`;
+const token = ()=>localStorage.getItem('nexus_token');
+const esc = s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+let PROJECTS = [];
+let startDate = new Date(); startDate.setDate(startDate.getDate() - 7); startDate.setHours(0,0,0,0);
+const DAY_WIDTH = 40;
+const DURATION_DAYS = 45;
+
+async function load() {
+  const res = await fetch('/api/projects', {headers:{'x-user':username,'Authorization':`Bearer ${token()}`}});
+  PROJECTS = await res.json();
+  renderGantt();
+}
+
+function panDays(d) {
+  startDate.setDate(startDate.getDate() + d);
+  renderGantt();
+}
+
+function renderGantt() {
+  let endDate = new Date(startDate); endDate.setDate(endDate.getDate() + DURATION_DAYS - 1);
+  document.getElementById('gRangeLab').textContent = `${startDate.toISOString().slice(0,10)} // ${endDate.toISOString().slice(0,10)}`;
+
+  let sideHtml = ''; let headHtml = ''; let bodyHtml = '';
+  
+  // Header dates
+  let cursor = new Date(startDate);
+  const today = new Date(); today.setHours(0,0,0,0);
+  for(let i=0; i<DURATION_DAYS; i++) {
+    const isWk = cursor.getDay()===0 || cursor.getDay()===6;
+    const isTd = cursor.getTime() === today.getTime();
+    headHtml += `<div class="gc-day ${isWk?'weekend':''} ${isTd?'today':''}">${cursor.getDate()}<br><span style="font-size:0.35rem;opacity:0.5">${['S','M','T','W','T','F','S'][cursor.getDay()]}</span></div>`;
+    cursor.setDate(cursor.getDate()+1);
+  }
+
+  // Rows
+  const sT = startDate.getTime();
+  const eT = endDate.getTime();
+  
+  PROJECTS.forEach(p => {
+    sideHtml += `<div class="g-row" style="background:rgba(0,0,0,.5); border-left:4px solid ${p.color||'var(--g)'}"><div class="pr-title">${esc(p.title)}</div></div>`;
+    bodyHtml += `<div class="gc-row" style="background:rgba(0,0,0,.5);"></div>`;
+
+    if(p.tasks && p.tasks.length){
+      p.tasks.forEach(t=>{
+        sideHtml += `<div class="g-row"><div class="ta-title" onclick="window.location.href='/projects.html#${p.id}'">↳ ${esc(t.title)}</div></div>`;
+        let bRowHtml = `<div class="gc-row">`;
+        
+        let dEnd = t.dueDate ? new Date(t.dueDate).setHours(0,0,0,0) : null;
+        let dStart = t.createdAt ? new Date(t.createdAt).setHours(0,0,0,0) : (dEnd?dEnd-86400000*3:null);
+        
+        if (dEnd && dStart && dEnd >= sT && dStart <= eT) {
+          const sDate = new Date(dStart); const eDate = new Date(dEnd);
+          const startPx = Math.max(0, Math.floor((sDate.getTime() - sT)/86400000) * DAY_WIDTH);
+          let endPx = Math.min(DURATION_DAYS * DAY_WIDTH, (Math.floor((eDate.getTime() - sT)/86400000)+1) * DAY_WIDTH);
+          const width = Math.max(endPx - startPx, DAY_WIDTH);
+          
+          if(t.priority==='urgent' && width==DAY_WIDTH) {
+            bRowHtml += `<div class="g-milestone" style="left:${startPx+10}px" title="${esc(t.title)}"></div>`;
+          } else {
+            const bg = t.completed ? 'rgba(0,255,65,.3)' : (p.color || '#00ff41');
+            bRowHtml += `<div class="g-bar" style="left:${startPx}px; width:${width}px; background:${bg}; color:${t.completed?'#fff':'#000'}" title="${esc(t.title)}">${esc(t.title.substring(0,8))}</div>`;
+          }
+        }
+        bRowHtml += `</div>`;
+        bodyHtml += bRowHtml;
+      });
+    }
+  });
+
+  document.getElementById('gSide').innerHTML += sideHtml;
+  document.getElementById('gHead').innerHTML = headHtml;
+  document.getElementById('gBody').innerHTML = bodyHtml;
+  
+  // Auto scroll to today
+  const tdIdx = Math.floor((today.getTime()-sT)/86400000);
+  if(tdIdx > 0 && tdIdx < DURATION_DAYS) {
+    document.getElementById('gScroll').scrollLeft = (tdIdx * DAY_WIDTH) - 100;
+  }
+}
+
+load();
+</script>
+<footer class="system-footer"><span>[ OXYGEN: 98% ]</span><span class="blink">_ TIMELINE SYNC _</span></footer>
+</body></html>

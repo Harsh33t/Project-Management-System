@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS PAM — Automation Rules</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" /><link rel="stylesheet" href="/chatbot.css" />
+  <style>
+    .auto-list { margin-top:20px; }
+    .auto-card { background:rgba(0,0,0,.6); border:1px solid var(--c); padding:16px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; }
+    .auto-card.inactive { opacity:.5; border-color:var(--g-dim); }
+    .rule-title { font-family:'Press Start 2P'; font-size:.65rem; color:var(--c); margin-bottom:8px; }
+    .rule-desc { font-family:'VT323'; font-size:1rem; color:var(--g); display:flex; align-items:center; gap:8px; }
+    .keyword { background:rgba(255,255,255,.1); padding:2px 6px; font-weight:bold; }
+    .keyword.trig { color:#ff3d3d; }
+    .keyword.act { color:var(--y); }
+    .modal { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.8); z-index:900; display:none; align-items:center; justify-content:center; }
+    .modal-content { background:#0a0a0a; border:2px solid var(--c); padding:24px; min-width:400px; box-shadow:0 0 30px rgba(0,217,255,.2); }
+    .form-group { margin-bottom:16px; }
+    .form-label { display:block; font-family:'Press Start 2P'; font-size:.5rem; color:var(--g); margin-bottom:6px; }
+    .form-select, .form-input { width:100%; background:#000; border:1px solid var(--g-dim); color:#fff; padding:8px; font-family:'VT323'; font-size:1rem; }
+    .form-select:focus, .form-input:focus { outline:none; border-color:var(--c); }
+    .btn-save { background:var(--c); color:#000; border:none; padding:8px 16px; font-family:'Press Start 2P'; font-size:.5rem; cursor:pointer; }
+    .btn-cancel { background:transparent; border:1px solid var(--r); color:var(--r); padding:8px 16px; font-family:'Press Start 2P'; font-size:.5rem; cursor:pointer; margin-left:8px; }
+  </style>
+</head>
+<body>
+<nav class="navbar"><div class="navbar-inner">
+  <div class="logo-wrapper" onclick="window.location.href='/index.html'" style="cursor:pointer;display:flex;align-items:center;gap:8px;">
+    <span style="color:var(--g);font-size:1.25rem;">NEXUS</span>
+    <span style="display:flex;align-items:center;gap:4px;font-size:1.25rem;">P<svg style="width:1.2rem;height:1.2rem" viewBox="0 0 16 16"><rect x="7" y="0" width="2" height="4" fill="#fff"/><rect x="6" y="4" width="4" height="6" fill="#00ff41"/><rect x="4" y="6" width="8" height="4" fill="#00ff41"/><rect x="2" y="10" width="12" height="2" fill="#008f11"/><rect x="0" y="12" width="4" height="4" fill="#ff0055"/><rect x="12" y="12" width="4" height="4" fill="#ff0055"/></svg>M</span>
+  </div>
+  <div class="nav-right">
+    <a class="nav-link" href="/dashboard.html">[DASHBOARD]</a>
+    <a class="nav-link" href="/projects.html">[PROJECTS]</a>
+    <a class="nav-link" href="/knowledge.html">[DIRECTIVES]</a>
+    <a class="nav-link active" href="/automations.html">[AUTOMATIONS]</a>
+    <a class="nav-link" href="/teams.html">[SQUADS]</a>
+    <div id="currentUserSelect" class="nav-link" style="border-color:var(--y);color:var(--y);pointer-events:none;padding:6px 12px;"></div>
+  </div>
+</div></nav>
+
+<main class="page-root"><div class="content-wrap">
+  <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+    <h1 class="page-title" style="color:var(--c) !important; margin:0;">▸ AUTOMATION PROTOCOLS</h1>
+    <button style="border-color:var(--c);color:var(--c)" onclick="openModal()">[CREATE PROTOCOL]</button>
+  </div>
+  
+  <div class="auto-list" id="ruleList"></div>
+</div></main>
+
+<div class="modal" id="autoModal">
+  <div class="modal-content">
+    <h2 style="font-family:'Press Start 2P';font-size:.8rem;color:var(--c);margin-top:0;">DEFINE LOGIC GATE</h2>
+    
+    <div class="form-group">
+      <label class="form-label">TRIGGER CONDITION</label>
+      <select class="form-select" id="mTrigger">
+        <option value="task_done">WHEN OPERATION IS COMPLETED</option>
+        <option value="task_created">WHEN OPERATION IS INITIALIZED</option>
+        <option value="overdue">WHEN OPERATION IS OVERDUE</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">TARGET PROJECT (OPTIONAL)</label>
+      <select class="form-select" id="mProject"><option value="ALL">ALL MISSIONS</option></select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">ACTION TO EXECUTE</label>
+      <select class="form-select" id="mAction">
+        <option value="notify">BROADCAST NOTIFICATION</option>
+        <option value="flag_urgent">ESCALATE TO CRITICAL PRIORITY</option>
+        <option value="assign">ASSIGN TO SQUAD LEADER</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">PROTOCOL ACTIVE?</label>
+      <input type="checkbox" id="mActive" checked>
+    </div>
+
+    <div style="margin-top:24px; text-align:right;">
+      <button class="btn-cancel" onclick="closeModal()">CANCEL</button>
+      <button class="btn-save" onclick="saveRule()">ENGAGE RULE</button>
+    </div>
+  </div>
+</div>
+
+<script src="/auth-guard.js"></script><script src="/chatbot.js"></script>
+<script>
+const me = JSON.parse(localStorage.getItem('nexus_user')||'{}');
+const username = me.username||me.name||'OPERATIVE';
+document.getElementById('currentUserSelect').textContent = `[ ${username} ]`;
+const token = ()=>localStorage.getItem('nexus_token');
+const esc = s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+const TRIG_MAP = { task_done: 'OPERATION COMPLETED', task_created: 'OPERATION INITIALIZED', overdue: 'OPERATION OVERDUE' };
+const ACT_MAP = { notify: 'BROADCAST ALERT', flag_urgent: 'ESCALATE TO CRITICAL', assign: 'ASSIGN TO LEADER' };
+
+let RULES = [];
+
+async function load() {
+  const [rRes, pRes] = await Promise.all([
+    fetch('/api/automations', {headers:{'x-user':username,'Authorization':`Bearer ${token()}`}}),
+    fetch('/api/projects', {headers:{'x-user':username,'Authorization':`Bearer ${token()}`}})
+  ]);
+  RULES = await rRes.json();
+  const projs = await pRes.json();
+  const sel = document.getElementById('mProject');
+  sel.innerHTML = '<option value="ALL">ALL MISSIONS</option>' + projs.map(p=>`<option value="${p.id}">${esc(p.title)}</option>`).join('');
+  renderRules();
+}
+
+function renderRules() {
+  const list = document.getElementById('ruleList');
+  if(!RULES.length) { list.innerHTML = `<div class="empty-state">[ NO PROTOCOLS LOADED ]</div>`; return; }
+  list.innerHTML = RULES.map(r => `
+    <div class="auto-card ${r.active?'':'inactive'}">
+      <div>
+        <div class="rule-title">PROTOCOL // ${r.id} ${r.active?'':'(DEACTIVATED)'}</div>
+        <div class="rule-desc">
+          IF <span class="keyword trig">${TRIG_MAP[r.trigger]||r.trigger}</span>
+          IN <span class="keyword">${r.projectId==='ALL'?'ALL MISSIONS':esc(r.projectId)}</span>
+          THEN <span class="keyword act">${ACT_MAP[r.action]||r.action}</span>
+        </div>
+      </div>
+      <div>
+        <button style="border-color:var(--r);color:var(--r);padding:4px 8px;font-size:.5rem;font-family:'Press Start 2P';background:transparent;cursor:pointer" onclick="deleteRule('${r.id}')">PURGE</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openModal() { document.getElementById('autoModal').style.display='flex'; document.getElementById('mActive').checked=true; }
+function closeModal() { document.getElementById('autoModal').style.display='none'; }
+
+async function saveRule() {
+  const payload = {
+    trigger: document.getElementById('mTrigger').value,
+    action: document.getElementById('mAction').value,
+    projectId: document.getElementById('mProject').value,
+    active: document.getElementById('mActive').checked
+  };
+  await fetch('/api/automations', { method:'POST', headers:{'Content-Type':'application/json','x-user':username,'Authorization':`Bearer ${token()}`}, body: JSON.stringify(payload) });
+  closeModal(); load();
+}
+
+async function deleteRule(id) {
+  if(!confirm('PURGE THIS PROTOCOL?')) return;
+  await fetch(`/api/automations/${id}`, { method:'DELETE', headers:{'x-user':username,'Authorization':`Bearer ${token()}`} });
+  load();
+}
+
+load();
+</script>
+<footer class="system-footer"><span>[ OXYGEN: 98% ]</span><span class="blink">_ AUTOMATIONS ONLINE _</span></footer>
+</body></html>

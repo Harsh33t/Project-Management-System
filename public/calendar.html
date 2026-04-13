@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS — Mission Calendar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" /><link rel="stylesheet" href="/chatbot.css" />
+  <style>
+    .cal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+    .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+    .cal-day-label { text-align:center; font-size:.5rem; color:rgba(255,255,255,.4); padding:6px 0; font-family:'Press Start 2P'; }
+    .cal-cell {
+      min-height:90px; border:1px solid var(--g-dim); padding:6px; cursor:pointer;
+      transition:background .15s; position:relative; background:rgba(0,0,0,.3);
+    }
+    .cal-cell:hover { background:rgba(0,255,65,.06); }
+    .cal-cell.today { border-color:var(--g); background:rgba(0,255,65,.08); }
+    .cal-cell.other-month { opacity:.3; }
+    .cal-date { font-family:'Press Start 2P'; font-size:.45rem; color:rgba(255,255,255,.5); margin-bottom:4px; }
+    .cal-cell.today .cal-date { color:var(--g); }
+    .cal-task-dot {
+      font-size:.65rem; margin-bottom:2px; padding:2px 5px; border-left:2px solid;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-family:'VT323';
+      cursor:pointer; transition:opacity .15s;
+    }
+    .cal-task-dot:hover { opacity:.7; }
+    .cal-task-dot.high { border-color:#ff3d3d; color:#ff8a8a; }
+    .cal-task-dot.medium { border-color:var(--y); color:var(--y); }
+    .cal-task-dot.low { border-color:var(--g); color:var(--g); }
+    .cal-task-dot.done { opacity:.35; text-decoration:line-through; }
+    .cal-more { font-size:.55rem; color:var(--c); font-family:'VT323'; cursor:pointer; }
+    .cal-nav-btn { cursor:pointer; padding:6px 14px; border:1px solid var(--g); color:var(--g); font-family:'Press Start 2P'; font-size:.55rem; background:transparent; }
+    .cal-nav-btn:hover { background:rgba(0,255,65,.1); }
+    .cal-month-label { font-family:'Press Start 2P'; font-size:.8rem; color:var(--g); text-shadow:var(--g-glow); }
+    #taskPopup {
+      position:fixed; z-index:200; background:#0a0a0a; border:1px solid var(--g);
+      padding:16px; min-width:260px; max-width:340px; box-shadow:0 0 20px rgba(0,255,65,.2);
+      display:none;
+    }
+    .popup-title { font-family:'Press Start 2P'; font-size:.65rem; color:var(--g); margin-bottom:8px; }
+    .popup-meta { font-size:.75rem; color:rgba(255,255,255,.5); font-family:'VT323'; }
+    .popup-close { float:right; cursor:pointer; color:var(--r); }
+  </style>
+</head>
+<body>
+<nav class="navbar"><div class="navbar-inner">
+  <div class="logo-wrapper" onclick="window.location.href='/index.html'" style="cursor:pointer;display:flex;align-items:center;gap:8px;">
+    <span style="color:var(--g);font-size:1.25rem;">NEXUS</span>
+    <span style="display:flex;align-items:center;gap:4px;font-size:1.25rem;">P<svg style="width:1.2rem;height:1.2rem" viewBox="0 0 16 16"><rect x="7" y="0" width="2" height="4" fill="#fff"/><rect x="6" y="4" width="4" height="6" fill="#00ff41"/><rect x="4" y="6" width="8" height="4" fill="#00ff41"/><rect x="2" y="10" width="12" height="2" fill="#008f11"/><rect x="0" y="12" width="4" height="4" fill="#ff0055"/><rect x="12" y="12" width="4" height="4" fill="#ff0055"/></svg>M</span>
+  </div>
+  <div class="nav-right">
+    <a class="nav-link" href="/dashboard.html">[DASHBOARD]</a>
+    <a class="nav-link" href="/projects.html">[PROJECTS]</a>
+    <a class="nav-link active" href="/calendar.html">[CALENDAR]</a>
+    <a class="nav-link" href="/mytasks.html">[MY TASKS]</a>
+    <a class="nav-link" href="/teams.html">[SQUADS]</a>
+    <div id="currentUserSelect" class="nav-link" style="border-color:var(--y);color:var(--y);pointer-events:none;padding:6px 12px;"></div>
+    <button style="border-color:#ff3d3d;color:#ff8a8a;font-size:.65rem;padding:6px 12px" onclick="localStorage.removeItem('nexus_token');localStorage.removeItem('nexus_user');window.location.href='/login.html'">[LOGOUT]</button>
+  </div>
+</div></nav>
+
+<main class="page-root"><div class="content-wrap">
+  <section class="panel">
+    <div class="cal-header">
+      <button class="cal-nav-btn" id="prevBtn">◀ PREV</button>
+      <span class="cal-month-label" id="monthLabel">MISSION CALENDAR</span>
+      <button class="cal-nav-btn" id="nextBtn">NEXT ▶</button>
+    </div>
+    <div class="cal-grid" id="calGrid">
+      <div class="cal-day-label">SUN</div><div class="cal-day-label">MON</div><div class="cal-day-label">TUE</div>
+      <div class="cal-day-label">WED</div><div class="cal-day-label">THU</div><div class="cal-day-label">FRI</div><div class="cal-day-label">SAT</div>
+    </div>
+  </section>
+</div></main>
+
+<div id="taskPopup">
+  <span class="popup-close" onclick="document.getElementById('taskPopup').style.display='none'">✕</span>
+  <div class="popup-title" id="popupTitle"></div>
+  <div class="popup-meta" id="popupMeta"></div>
+  <div style="margin-top:10px"><a id="popupLink" style="color:var(--c);font-size:.7rem;font-family:'VT323'">→ VIEW PROJECT</a></div>
+</div>
+
+<script src="/auth-guard.js"></script>
+<script src="/chatbot.js"></script>
+<script>
+const me = JSON.parse(localStorage.getItem('nexus_user')||'{}');
+const username = me.username||me.name||'OPERATIVE';
+document.getElementById('currentUserSelect').textContent = `[ ${username} ]`;
+const token = ()=>localStorage.getItem('nexus_token');
+const esc = s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+const MONTHS = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+let cur = new Date(); let viewYear = cur.getFullYear(); let viewMonth = cur.getMonth();
+
+async function loadCalendar() {
+  const res = await fetch(`/api/calendar?year=${viewYear}&month=${viewMonth}`, {
+    headers:{ 'x-user':username, 'Authorization':`Bearer ${token()}` }
+  });
+  const events = await res.json();
+  renderCalendar(events);
+}
+
+function renderCalendar(events) {
+  document.getElementById('monthLabel').textContent = `${MONTHS[viewMonth]} ${viewYear}`;
+  const grid = document.getElementById('calGrid');
+  // remove old cells (keep day label headers = first 7)
+  while(grid.children.length > 7) grid.removeChild(grid.lastChild);
+
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth+1, 0).getDate();
+  const daysInPrev = new Date(viewYear, viewMonth, 0).getDate();
+  const today = new Date();
+
+  // Build event map
+  const evMap = {};
+  events.forEach(e => {
+    const d = new Date(e.dueDate);
+    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    if (!evMap[key]) evMap[key] = [];
+    evMap[key].push(e);
+  });
+
+  // Previous month padding
+  for(let i=0; i<firstDay; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell other-month';
+    cell.innerHTML = `<div class="cal-date">${daysInPrev - firstDay + i + 1}</div>`;
+    grid.appendChild(cell);
+  }
+
+  for(let d=1; d<=daysInMonth; d++) {
+    const isToday = d===today.getDate() && viewMonth===today.getMonth() && viewYear===today.getFullYear();
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell' + (isToday?' today':'');
+    const key = `${viewYear}-${viewMonth}-${d}`;
+    const dayEvents = evMap[key] || [];
+    let html = `<div class="cal-date">${d}</div>`;
+    const max = 3;
+    dayEvents.slice(0, max).forEach(e => {
+      const pri = (e.priority||'medium').toLowerCase();
+      const done = e.completed ? ' done' : '';
+      html += `<div class="cal-task-dot ${pri}${done}" onclick="showPopup(event,'${esc(e.title)}','${e.projectTitle}','${e.priority}','${e.status}','${e.projectId}','${e.dueDate}')">${esc(e.title)}</div>`;
+    });
+    if(dayEvents.length > max) html += `<div class="cal-more">+${dayEvents.length-max} more</div>`;
+    cell.innerHTML = html;
+    grid.appendChild(cell);
+  }
+
+  // Fill trailing cells
+  const total = firstDay + daysInMonth;
+  const trailing = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for(let i=1; i<=trailing; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell other-month';
+    cell.innerHTML = `<div class="cal-date">${i}</div>`;
+    grid.appendChild(cell);
+  }
+}
+
+function showPopup(evt, title, project, priority, status, projectId, dueDate) {
+  evt.stopPropagation();
+  const popup = document.getElementById('taskPopup');
+  document.getElementById('popupTitle').textContent = title;
+  document.getElementById('popupMeta').innerHTML = `PROJECT: ${esc(project)}<br>PRIORITY: ${(priority||'?').toUpperCase()}<br>STATUS: ${(status||'?').toUpperCase()}<br>DUE: ${dueDate}`;
+  document.getElementById('popupLink').href = `/projects.html`;
+  popup.style.display = 'block';
+  popup.style.left = Math.min(evt.pageX+10, window.innerWidth-360) + 'px';
+  popup.style.top = Math.min(evt.pageY+10, window.pageYOffset+window.innerHeight-200) + 'px';
+}
+
+document.addEventListener('click', e => { if(!e.target.closest('#taskPopup') && !e.target.closest('.cal-task-dot')) document.getElementById('taskPopup').style.display='none'; });
+document.getElementById('prevBtn').addEventListener('click', ()=>{ viewMonth--; if(viewMonth<0){viewMonth=11;viewYear--;} loadCalendar(); });
+document.getElementById('nextBtn').addEventListener('click', ()=>{ viewMonth++; if(viewMonth>11){viewMonth=0;viewYear++;} loadCalendar(); });
+loadCalendar();
+</script>
+<footer class="system-footer"><span>[ OXYGEN: 98% ]</span><span class="blink">_ MISSION CALENDAR _</span></footer>
+</body></html>

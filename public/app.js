@@ -60,19 +60,49 @@ function taskCard(projectId, t) {
   const priClass = t.priority === "high" ? "pri-high" : t.priority === "medium" ? "pri-medium" : "pri-low";
   const priLabel = t.priority === "high" ? "CRITICAL" : t.priority === "medium" ? "HIGH" : "STABLE";
   const statusIcon = t.completed || t.status === "done" ? "status-done" : t.status === "in-progress" ? "status-in-progress" : "status-todo";
+  const timerActive = t.timerStart ? "ACTIVE" : "STANDBY";
+  const timerStyle = t.timerStart ? "color:var(--y); animation:blink 1s infinite" : "color:rgba(255,255,255,.4)";
+  const votes = t.votes ? Object.keys(t.votes).length : 0;
+  const isVoted = t.votes && t.votes[st.user] ? 'color:var(--c)' : '';
+  const checks = t.checklist || [];
+  const checkCount = checks.length;
+  const checkDone = checks.filter(c => c.done).length;
+  const chkPct = checkCount ? Math.round((checkDone/checkCount)*100) : null;
+  const chkHtml = checkCount ? \`<div style="font-size:0.75rem; color:var(--c); margin-top:8px;">[ \${checkDone} / \${checkCount} ] SUB-TASKS <div class="health-bar-container" style="height:4px; margin-top:4px;"><div class="health-bar-fill" style="width:\${chkPct}%"></div></div></div>\` : '';
   
-  return `<div class="log-entry" data-task-id="${t.id}" title="MISSION NOTES: ${esc(t.notes || 'None')}">
-    <div class="log-status-bullet ${statusIcon}"></div>
-    <div style="flex:1; font-family:'VT323'; font-size:1.1rem;">
-      <span style="color:rgba(255,255,255,0.9)">${esc(t.title)}</span>
-      <span style="color:rgba(255,255,255,0.4); font-size:0.8rem; margin-left:10px;">[ ${t.dueDate || 'NO_DEADLINE'} ]</span>
+  return `<div class="log-entry" data-task-id="${t.id}">
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
+      <div class="log-status-bullet ${statusIcon}"></div>
+      <div style="flex:1; font-family:'VT323'; font-size:1.1rem; min-width:200px;">
+        <span style="color:rgba(255,255,255,0.9)">${esc(t.title)}</span>
+        <span style="color:rgba(255,255,255,0.4); font-size:0.8rem; margin-left:10px;">[ DUE: ${t.dueDate || 'NONE'} ]</span>
+        <div style="font-size:.8rem; color:rgba(0,255,65,0.6); margin-top:4px;">${esc(t.notes || '')}</div>
+        ${chkHtml}
+      </div>
+      <div class="log-priority ${priClass}" style="flex-shrink:0">${priLabel}</div>
     </div>
-    <div class="log-priority ${priClass}">${priLabel}</div>
-    <div class="task-ops" style="display:flex; gap:5px;">
-      <button class="task-op" style="padding:2px 8px; border-color:var(--g); color:var(--g); font-size:0.6rem;" data-done-task="${projectId}:${t.id}">✓</button>
-      <button class="task-op btn-danger" style="padding:2px 8px; font-size:0.6rem;" data-delete-task="${projectId}:${t.id}">✕</button>
+    
+    <div style="display:flex; gap:10px; margin-top:12px; align-items:center; flex-wrap:wrap;">
+      <button class="task-op" style="padding:4px;" onclick="toggleTimer('${projectId}','${t.id}', ${!!t.timerStart})">TIMER: <span style="${timerStyle}">${timerActive}</span></button>
+      <button class="task-op" style="padding:4px; ${isVoted}" onclick="voteTask('${projectId}','${t.id}')">VOTE [${votes}]</button>
+      <span style="font-family:'VT323'; font-size:.8rem; color:var(--g); margin-left:auto">${t.totalMinutes||0} MINS</span>
+      <div class="task-ops" style="display:flex; gap:5px;">
+        <button class="task-op" style="padding:2px 8px; border-color:var(--g); color:var(--g); font-size:0.6rem;" data-done-task="${projectId}:${t.id}">✓</button>
+        <button class="task-op btn-danger" style="padding:2px 8px; font-size:0.6rem;" data-delete-task="${projectId}:${t.id}">✕</button>
+      </div>
     </div>
   </div>`;
+}
+
+async function voteTask(pid, tid) {
+  await fetch(`/api/projects/${pid}/tasks/${tid}/vote`, { method:'POST', headers:{ 'x-user':st.user, Authorization:\`Bearer \${localStorage.getItem('nexus_token')}\` }});
+  load();
+}
+
+async function toggleTimer(pid, tid, isRunning) {
+  const url = \`/api/projects/\${pid}/tasks/\${tid}/timer/\${isRunning?'stop':'start'}\`;
+  await fetch(url, { method:'POST', headers:{ 'x-user':st.user, Authorization:\`Bearer \${localStorage.getItem('nexus_token')}\` }});
+  load();
 }
 
 async function requestBriefing(projectId) {

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS — Sprint Command</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" /><link rel="stylesheet" href="/chatbot.css" />
+  <style>
+    .sprint-list { display:flex; gap:16px; margin-bottom:20px; overflow-x:auto; padding-bottom:8px; }
+    .sprint-tab {
+      border:1px solid var(--g-dim); padding:10px 16px; cursor:pointer; font-family:'Press Start 2P'; font-size:.6rem;
+      color:rgba(255,255,255,.5); background:rgba(0,0,0,.4); white-space:nowrap; transition:.2s;
+    }
+    .sprint-tab.active, .sprint-tab:hover { border-color:var(--c); color:var(--c); background:rgba(0,255,65,.05); box-shadow:0 0 10px rgba(0,255,65,.1); }
+    .sprint-header { border:1px solid var(--c); padding:16px; margin-bottom:20px; background:rgba(0,0,0,.3); display:flex; gap:20px; flex-wrap:wrap; align-items:flex-end; }
+    .sprint-title { font-family:'Press Start 2P'; font-size:1rem; color:var(--c); text-shadow:0 0 8px rgba(0,217,255,.5); margin-bottom:8px; }
+    .sprint-dates { font-family:'VT323'; font-size:1rem; color:var(--g); margin-bottom:4px; }
+    .sprint-goal { font-family:'VT323'; font-size:.9rem; color:rgba(255,255,255,.6); max-width:600px; }
+    .sprint-board { display:flex; gap:16px; min-height:400px; }
+    .sprint-col {
+      flex:1; border:1px solid var(--g-dim); background:rgba(0,0,0,.4); padding:10px;
+      display:flex; flex-direction:column; min-width:280px; position:relative;
+    }
+    .sprint-col-h { text-align:center; font-family:'Press Start 2P'; font-size:.65rem; color:var(--g); padding-bottom:10px; border-bottom:1px solid var(--g-dim); margin-bottom:10px; }
+    .sprint-card {
+      background:rgba(0,0,0,.6); border:1px solid var(--g-dim); padding:12px; margin-bottom:10px;
+      cursor:move; transition:transform .1s, border-color .15s; font-family:'VT323';
+    }
+    .sprint-card:hover { border-color:var(--g); transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,255,65,.1); }
+    .sprint-card.dragging { opacity:.5; transform:scale(0.95); }
+    .col-drop-zone { flex:1; min-height:100px; }
+    .col-drop-zone.over { background:rgba(0,255,65,.05); }
+    .sc-title { font-family:'Press Start 2P'; font-size:.55rem; color:#fff; margin-bottom:6px; line-height:1.4; }
+    .sc-meta { font-size:.85rem; color:rgba(255,255,255,.5); display:flex; justify-content:space-between; }
+    .sc-proj { color:var(--y); }
+    .btn-create-sprint { font-family:'Press Start 2P'; font-size:.55rem; padding:10px 16px; background:var(--c); color:#000; border:none; cursor:pointer; transition:.2s; white-space:nowrap; }
+    .btn-create-sprint:hover { box-shadow:0 0 15px var(--c); }
+    /* Modal */
+    #sprintModal { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.8); z-index:900; display:none; align-items:center; justify-content:center; }
+    .sm-content { background:#0a0a0a; border:2px solid var(--c); padding:24px; min-width:400px; box-shadow:0 0 30px rgba(0,217,255,.2); }
+    .form-group { margin-bottom:16px; }
+    .form-label { display:block; font-family:'Press Start 2P'; font-size:.5rem; color:var(--g); margin-bottom:6px; }
+    .form-input { width:100%; background:#000; border:1px solid var(--g-dim); color:#fff; padding:8px; font-family:'VT323'; font-size:1rem; }
+    .form-input:focus { outline:none; border-color:var(--g); box-shadow:0 0 8px rgba(0,255,65,.2); }
+    .btn-save { background:var(--g); color:#000; border:none; padding:8px 16px; font-family:'Press Start 2P'; font-size:.5rem; cursor:pointer; }
+    .btn-cancel { background:transparent; border:1px solid var(--r); color:var(--r); padding:8px 16px; font-family:'Press Start 2P'; font-size:.5rem; cursor:pointer; margin-left:8px; }
+  </style>
+</head>
+<body>
+<nav class="navbar"><div class="navbar-inner">
+  <div class="logo-wrapper" onclick="window.location.href='/index.html'" style="cursor:pointer;display:flex;align-items:center;gap:8px;">
+    <span style="color:var(--g);font-size:1.25rem;">NEXUS</span>
+    <span style="display:flex;align-items:center;gap:4px;font-size:1.25rem;">P<svg style="width:1.2rem;height:1.2rem" viewBox="0 0 16 16"><rect x="7" y="0" width="2" height="4" fill="#fff"/><rect x="6" y="4" width="4" height="6" fill="#00ff41"/><rect x="4" y="6" width="8" height="4" fill="#00ff41"/><rect x="2" y="10" width="12" height="2" fill="#008f11"/><rect x="0" y="12" width="4" height="4" fill="#ff0055"/><rect x="12" y="12" width="4" height="4" fill="#ff0055"/></svg>M</span>
+  </div>
+  <div class="nav-right">
+    <a class="nav-link" href="/dashboard.html">[DASHBOARD]</a>
+    <a class="nav-link" href="/projects.html">[PROJECTS]</a>
+    <a class="nav-link" href="/mytasks.html">[MY TASKS]</a>
+    <a class="nav-link active" href="/sprints.html">[SPRINTS]</a>
+    <div id="currentUserSelect" class="nav-link" style="border-color:var(--y);color:var(--y);pointer-events:none;padding:6px 12px;"></div>
+  </div>
+</div></nav>
+
+<main class="page-root"><div class="content-wrap">
+  
+  <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:16px;">
+    <h1 class="page-title" style="color:var(--c) !important; margin:0;">▸ SPRINT COMMAND</h1>
+    <button class="btn-create-sprint" onclick="openSprintModal()">[+] INIT NEW SPRINT</button>
+  </div>
+
+  <div class="sprint-list" id="sprintTabs"></div>
+  
+  <div id="activeSprintArea" style="display:none">
+    <div class="sprint-header">
+      <div style="flex:1">
+        <div class="sprint-title" id="shTitle">SPRINT 1: ALPHA</div>
+        <div class="sprint-dates" id="shDates">2026-04-10 → 2026-04-24</div>
+        <div class="sprint-goal" id="shGoal">Objective: System stability and core logic.</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:'Press Start 2P';font-size:.5rem;color:var(--g);margin-bottom:6px">CAPACITY <span id="shCap"></span></div>
+        <div style="font-family:'Press Start 2P';font-size:.5rem;color:rgba(255,255,255,.5)">TASKS IN SPRINT: <span id="shCount" style="color:#fff">0</span></div>
+      </div>
+    </div>
+
+    <!-- Sprint Board -->
+    <div class="sprint-board">
+      <div class="sprint-col">
+        <div class="sprint-col-h">TODO</div>
+        <div class="col-drop-zone" id="col-todo" data-status="todo"></div>
+      </div>
+      <div class="sprint-col" style="border-color:var(--y)44">
+        <div class="sprint-col-h" style="color:var(--y)">IN-PROGRESS</div>
+        <div class="col-drop-zone" id="col-in-progress" data-status="in-progress"></div>
+      </div>
+      <div class="sprint-col" style="border-color:rgba(0,217,255,.3)">
+        <div class="sprint-col-h" style="color:var(--c)">DONE</div>
+        <div class="col-drop-zone" id="col-done" data-status="done"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="noSprintsArea" style="text-align:center; padding:100px 0; border:1px solid var(--g-dim); background:rgba(0,0,0,.4)">
+    <div style="font-family:'Press Start 2P'; color:rgba(255,255,255,.4); margin-bottom:20px;">NO ACTIVE SPRINTS IN DATABASE</div>
+    <button class="btn-create-sprint" onclick="openSprintModal()">INITIALIZE FIRST SPRINT</button>
+  </div>
+
+</div></main>
+
+<div id="sprintModal">
+  <div class="sm-content">
+    <h2 style="font-family:'Press Start 2P';font-size:.8rem;color:var(--c);margin-top:0;margin-bottom:20px;">INITIALIZE SPRINT VECTOR</h2>
+    <div class="form-group">
+      <label class="form-label">SPRINT NOMENCLATURE</label>
+      <input type="text" class="form-input" id="smName" placeholder="e.g. SPRINT 1: INCEPTION">
+    </div>
+    <div class="form-group" style="display:flex; gap:16px;">
+      <div style="flex:1">
+        <label class="form-label">START DATE</label>
+        <input type="date" class="form-input" id="smStart">
+      </div>
+      <div style="flex:1">
+        <label class="form-label">END DATE</label>
+        <input type="date" class="form-input" id="smEnd">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">PRIMARY OBJECTIVE</label>
+      <input type="text" class="form-input" id="smGoal" placeholder="What is the mission?">
+    </div>
+    <div class="form-group">
+      <label class="form-label">CAPACITY VELOCITY</label>
+      <input type="number" class="form-input" id="smCap" placeholder="e.g. 40 (points/hours)">
+    </div>
+    <div style="margin-top:24px; text-align:right;">
+      <button class="btn-cancel" onclick="closeSprintModal()">ABORT</button>
+      <button class="btn-save" onclick="saveSprint()">ENGAGE SPRINT</button>
+    </div>
+  </div>
+</div>
+
+<script src="/auth-guard.js"></script>
+<script src="/chatbot.js"></script>
+<script>
+const me = JSON.parse(localStorage.getItem('nexus_user')||'{}');
+const username = me.username||me.name||'OPERATIVE';
+document.getElementById('currentUserSelect').textContent = `[ ${username} ]`;
+const token = ()=>localStorage.getItem('nexus_token');
+const esc = s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+let SPRINTS = []; let PROJECTS = []; let activeSprintId = null; 
+let DRAGGED_CARD = null;
+
+async function load() {
+  const [sRes, pRes] = await Promise.all([
+    fetch('/api/sprints', {headers:{'x-user':username,'Authorization':`Bearer ${token()}`}}),
+    fetch('/api/projects', {headers:{'x-user':username,'Authorization':`Bearer ${token()}`}})
+  ]);
+  SPRINTS = await sRes.json();
+  PROJECTS = await pRes.json();
+  
+  if(!SPRINTS.length) {
+    document.getElementById('activeSprintArea').style.display = 'none';
+    document.getElementById('noSprintsArea').style.display = 'block';
+  } else {
+    document.getElementById('activeSprintArea').style.display = 'block';
+    document.getElementById('noSprintsArea').style.display = 'none';
+    if(!activeSprintId) activeSprintId = SPRINTS[SPRINTS.length-1].id;
+    renderTabs();
+    renderBoard();
+  }
+}
+
+function renderTabs() {
+  const tabs = document.getElementById('sprintTabs');
+  tabs.innerHTML = SPRINTS.map(s => 
+    `<div class="sprint-tab ${s.id===activeSprintId?'active':''}" onclick="switchSprint('${s.id}')">
+      ${esc(s.name)}
+    </div>`
+  ).join('');
+}
+
+function switchSprint(sid) { activeSprintId = sid; renderTabs(); renderBoard(); }
+
+function renderBoard() {
+  const sprint = SPRINTS.find(s=>s.id === activeSprintId);
+  if(!sprint) return;
+  document.getElementById('shTitle').textContent = sprint.name;
+  document.getElementById('shDates').textContent = `${sprint.startDate||'???'} → ${sprint.endDate||'???'}`;
+  document.getElementById('shGoal').textContent = `OBJECTIVE: ${sprint.goal||'NONE YET.'}`;
+  document.getElementById('shCap').textContent = sprint.capacity||0;
+  
+  // Resolve tasks
+  const tList = [];
+  (sprint.taskIds||[]).forEach(link => {
+    const proj = PROJECTS.find(p=>p.id === link.projectId);
+    if(proj) {
+      const task = (proj.tasks||[]).find(t=>t.id === link.taskId);
+      if(task) tList.push({...task, prj:proj});
+    }
+  });
+
+  document.getElementById('shCount').textContent = tList.length;
+
+  document.getElementById('col-todo').innerHTML = '';
+  document.getElementById('col-in-progress').innerHTML = '';
+  document.getElementById('col-done').innerHTML = '';
+
+  tList.forEach(t => {
+    let st = t.status || 'todo';
+    if(t.completed) st = 'done';
+    const cId = `col-${st}`;
+    let col = document.getElementById(cId);
+    if(!col) col = document.getElementById('col-todo');
+    col.appendChild(buildCard(t));
+  });
+  
+  setupDragDrop();
+}
+
+function buildCard(t) {
+  const d = document.createElement('div');
+  d.className = 'sprint-card';
+  d.draggable = true;
+  d.dataset.tid = t.id;
+  d.dataset.pid = t.prj.id;
+  d.innerHTML = `
+    <div class="sc-title">${esc(t.title)}</div>
+    <div class="sc-meta">
+      <span class="sc-proj">[ ${esc(t.prj.title)} ]</span>
+      <span style="color:${t.priority==='high'||t.priority==='urgent'?'#ff3d3d':'var(--g)'}">${t.priority?t.priority.toUpperCase():'MED'}</span>
+    </div>
+  `;
+  d.addEventListener('dragstart', e=> { DRAGGED_CARD = d; setTimeout(()=>d.classList.add('dragging'),0); });
+  d.addEventListener('dragend', e=>{ d.classList.remove('dragging'); DRAGGED_CARD=null; });
+  return d;
+}
+
+function setupDragDrop() {
+  document.querySelectorAll('.col-drop-zone').forEach(zone => {
+    zone.addEventListener('dragover', e=> {
+      e.preventDefault(); zone.classList.add('over');
+    });
+    zone.addEventListener('dragleave', e=> { zone.classList.remove('over'); });
+    zone.addEventListener('drop', async e=> {
+      e.preventDefault(); zone.classList.remove('over');
+      if(!DRAGGED_CARD) return;
+      const tid = DRAGGED_CARD.dataset.tid;
+      const pid = DRAGGED_CARD.dataset.pid;
+      const tStat = zone.dataset.status;
+      zone.appendChild(DRAGGED_CARD);
+      
+      const comp = tStat === 'done';
+      await fetch(`/api/projects/${pid}/tasks/${tid}`, {
+        method:'PUT', headers:{'Content-Type':'application/json','x-user':username,'Authorization':`Bearer ${token()}`},
+        body: JSON.stringify({ status: tStat, completed: comp })
+      });
+      load(); // refresh data
+    });
+  });
+}
+
+function openSprintModal() {
+  document.getElementById('sprintModal').style.display='flex';
+  document.getElementById('smName').value=''; document.getElementById('smGoal').value='';
+  document.getElementById('smStart').value=''; document.getElementById('smEnd').value=''; document.getElementById('smCap').value='40';
+}
+function closeSprintModal() { document.getElementById('sprintModal').style.display='none'; }
+async function saveSprint() {
+  const payload = {
+    name: document.getElementById('smName').value.trim(), goal: document.getElementById('smGoal').value.trim(),
+    startDate: document.getElementById('smStart').value, endDate: document.getElementById('smEnd').value, cap: parseInt(document.getElementById('smCap').value)||0
+  };
+  if(!payload.name) return;
+  const res = await fetch('/api/sprints', {
+    method:'POST', headers:{'Content-Type':'application/json','x-user':username,'Authorization':`Bearer ${token()}`},
+    body: JSON.stringify(payload)
+  });
+  if(res.ok) { closeSprintModal(); load(); }
+}
+
+load();
+</script>
+<footer class="system-footer"><span>[ OXYGEN: 98% ]</span><span class="blink">_ COMMAND ACTIVE _</span></footer>
+</body></html>

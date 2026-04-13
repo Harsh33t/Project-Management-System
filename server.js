@@ -239,6 +239,41 @@ function getRank(xp = 0) {
   };
 }
 
+const ACHIEVEMENTS = [
+  { id: "first_mission",  icon: "🎖️",  name: "FIRST BLOOD",    desc: "Complete your first operation.",          check: (a,db,u) => (u.tasksCompleted||0) >= 1 },
+  { id: "speed_demon",    icon: "⚡",  name: "SPEED DEMON",    desc: "Complete a HIGH priority task.",           check: (a,db,u) => (u.highDone||0) >= 1 },
+  { id: "iron_will",      icon: "🔩",  name: "IRON WILL",      desc: "Complete 10 operations total.",            check: (a,db,u) => (u.tasksCompleted||0) >= 10 },
+  { id: "centurion",      icon: "💯",  name: "CENTURION",      desc: "Complete 100 operations.",                 check: (a,db,u) => (u.tasksCompleted||0) >= 100 },
+  { id: "demolisher",     icon: "💥",  name: "DEMOLISHER",     desc: "Delete 5 projects.",                       check: (a,db,u) => (u.projectsDeleted||0) >= 5 },
+  { id: "architect",      icon: "🏛️",  name: "ARCHITECT",      desc: "Create 10 missions.",                     check: (a,db,u) => (u.projectsCreated||0) >= 10 },
+  { id: "veteran",        icon: "⭐",  name: "VETERAN",        desc: "Reach COMMANDER rank.",                   check: (a,db,u) => getRank(u.xp||0).level >= 6 },
+  { id: "admiral",        icon: "🚀",  name: "ADMIRAL",        desc: "Reach FLEET ADMIRAL rank.",               check: (a,db,u) => getRank(u.xp||0).level >= 11 },
+  { id: "rich",           icon: "💰",  name: "WAR CHEST",      desc: "Accumulate 1000 PX.",                     check: (a,db,u) => (u.xp||0) >= 1000 },
+  { id: "communicator",   icon: "📡",  name: "SIGNAL MASTER",  desc: "Send 20 comms messages.",                 check: (a,db,u) => (u.msgsSent||0) >= 20 },
+  { id: "squad_leader",   icon: "👥",  name: "SQUAD LEADER",   desc: "Form your first squad.",                  check: (a,db,u) => (db.teams||[]).some(t=>t.owner===u.username) },
+  { id: "multitasker",    icon: "🔀",  name: "MULTITASKER",    desc: "Have 5 projects active at once.",         check: (a,db,u) => (db.projects||[]).filter(p=>p.status==='active').length >= 5 },
+  { id: "on_time",        icon: "⏰",  name: "ON TIME",        desc: "Complete a task before its due date.",    check: (a,db,u) => (u.onTimeDone||0) >= 1 },
+  { id: "unstoppable",    icon: "🛸",  name: "UNSTOPPABLE",    desc: "Complete 5 tasks in a single day.",       check: (a,db,u) => (u.todayDone||0) >= 5 },
+  { id: "pioneer",        icon: "🌌",  name: "PIONEER",        desc: "First login to the NEXUS system.",        check: (a,db,u) => true },
+];
+
+function checkAchievements(account, db) {
+  if (!account.achievements) account.achievements = [];
+  if (!account.unlockedToday) account.unlockedToday = [];
+  const newOnes = [];
+  ACHIEVEMENTS.forEach(ach => {
+    if (!account.achievements.includes(ach.id)) {
+      try {
+        if (ach.check(account, db, account)) {
+          account.achievements.push(ach.id);
+          newOnes.push(ach);
+        }
+      } catch(e) {}
+    }
+  });
+  return newOnes;
+}
+
 function getActor(req, db) {
   const byName = String(req.header("x-user") || "PLAYER_1").trim();
   const found = (db.users || []).find((u) => u.name.toLowerCase() === byName.toLowerCase());
@@ -1209,6 +1244,319 @@ app.post("/api/projects/:projectId/tasks/:taskId/comments", (req, res) => {
 app.get("/api/comms", (req, res) => {
   const db = readDb();
   res.json(db.messages.slice(-50));
+});
+
+app.post("/api/comms", (req, res) => {
+  const { text } = req.body;
+  if (!text) return res.status(400).json({ error: "No signal detected." });
+  const db = readDb();
+  const userName = getActor(req, db);
+  const msg = { id: id("msg"), text, user: userName, timestamp: new Date().toISOString() };
+  db.messages.push(msg);
+  if (db.messages.length > 100) db.messages = db.messages.slice(-100);
+  // track for achievements
+  const account = (db.accounts||[]).find(a => a.username === userName);
+  if (account) { account.msgsSent = (account.msgsSent||0) + 1; checkAchievements(account, db); }
+  writeDb(db);
+  res.json(msg);
+});
+
+// ═══════════════════════════════════════════════════════
+// MY TASKS  (cross-project personal view)
+// ═══════════════════════════════════════════════════════
+app.get("/api/mytasks", (req, res) => {
+  const db = readDb();
+  const userName = getActor(req, db);
+  const results = [];
+  (db.projects || []).forEach(p => {
+    (p.tasks || []).filter(t => !t.completed && ((Array.isArray(t.assignees) && t.assignees.includes(userName)) || t.assignee === userName))
+      .forEach(t => results.push({ ...t, projectId: p.id, projectTitle: p.title, projectColor: p.color || "#00ff41" }));
+  });
+  results.sort((a, b) => { if (!a.dueDate) return 1; if (!b.dueDate) return -1; return new Date(a.dueDate) - new Date(b.dueDate); });
+  res.json(results);
+});
+
+// ═══════════════════════════════════════════════════════
+// TASK VOTING
+// ═══════════════════════════════════════════════════════
+app.post("/api/projects/:pid/tasks/:tid/vote", (req, res) => {
+  const db = readDb(); const userName = getActor(req, db);
+  const p = db.projects.find(x => x.id === req.params.pid);
+  if (!p) return res.status(404).json({ error: "Not found" });
+  const t = p.tasks.find(x => x.id === req.params.tid);
+  if (!t) return res.status(404).json({ error: "Not found" });
+  if (!t.votes) t.votes = {};
+  if (t.votes[userName]) delete t.votes[userName]; else t.votes[userName] = true;
+  writeDb(db);
+  res.json({ votes: Object.keys(t.votes).length, voted: !!t.votes[userName] });
+});
+
+// ═══════════════════════════════════════════════════════
+// TASK CHECKLISTS
+// ═══════════════════════════════════════════════════════
+app.post("/api/projects/:pid/tasks/:tid/checklist", (req, res) => {
+  const { text } = req.body;
+  if (!text) return res.status(400).json({ error: "Text required" });
+  const db = readDb();
+  const p = db.projects.find(x => x.id === req.params.pid);
+  const t = p && p.tasks.find(x => x.id === req.params.tid);
+  if (!t) return res.status(404).json({ error: "Not found" });
+  if (!t.checklist) t.checklist = [];
+  const item = { id: id("chk"), text, done: false };
+  t.checklist.push(item); writeDb(db); res.json(item);
+});
+
+app.put("/api/projects/:pid/tasks/:tid/checklist/:cid", (req, res) => {
+  const db = readDb();
+  const p = db.projects.find(x => x.id === req.params.pid);
+  const t = p && p.tasks.find(x => x.id === req.params.tid);
+  if (!t) return res.status(404).json({ error: "Not found" });
+  const item = (t.checklist||[]).find(c => c.id === req.params.cid);
+  if (!item) return res.status(404).json({ error: "Item not found" });
+  item.done = !item.done;
+  if (req.body.text) item.text = req.body.text;
+  writeDb(db); res.json(item);
+});
+
+app.delete("/api/projects/:pid/tasks/:tid/checklist/:cid", (req, res) => {
+  const db = readDb();
+  const p = db.projects.find(x => x.id === req.params.pid);
+  const t = p && p.tasks.find(x => x.id === req.params.tid);
+  if (!t) return res.status(404).json({ error: "Not found" });
+  t.checklist = (t.checklist||[]).filter(c => c.id !== req.params.cid);
+  writeDb(db); res.json({ ok: true });
+});
+
+// ═══════════════════════════════════════════════════════
+// TIME TRACKING (start / stop)
+// ═══════════════════════════════════════════════════════
+app.post("/api/projects/:pid/tasks/:tid/timer/start", (req, res) => {
+  const db = readDb(); const userName = getActor(req, db);
+  const p = db.projects.find(x => x.id === req.params.pid);
+  const t = p && p.tasks.find(x => x.id === req.params.tid);
+  if (!t) return res.status(404).json({ error: "Not found" });
+  t.timerStart = new Date().toISOString(); t.timerUser = userName;
+  if (!t.timeLogs) t.timeLogs = [];
+  writeDb(db); res.json({ started: t.timerStart });
+});
+
+app.post("/api/projects/:pid/tasks/:tid/timer/stop", (req, res) => {
+  const db = readDb(); const userName = getActor(req, db);
+  const p = db.projects.find(x => x.id === req.params.pid);
+  const t = p && p.tasks.find(x => x.id === req.params.tid);
+  if (!t || !t.timerStart) return res.status(400).json({ error: "No timer running" });
+  const dur = Math.round((Date.now() - new Date(t.timerStart).getTime()) / 60000);
+  const entry = { id: id("tl"), user: userName, start: t.timerStart, end: new Date().toISOString(), minutes: dur, note: req.body.note || "" };
+  if (!t.timeLogs) t.timeLogs = [];
+  t.timeLogs.push(entry);
+  t.totalMinutes = (t.totalMinutes || 0) + dur;
+  t.timerStart = null; t.timerUser = null;
+  writeDb(db); res.json(entry);
+});
+
+// ═══════════════════════════════════════════════════════
+// SPRINTS
+// ═══════════════════════════════════════════════════════
+app.get("/api/sprints", (req, res) => {
+  const db = readDb();
+  if (!db.sprints) db.sprints = [];
+  res.json(db.sprints);
+});
+
+app.post("/api/sprints", (req, res) => {
+  const { name, startDate, endDate, goal, capacity } = req.body;
+  if (!name) return res.status(400).json({ error: "Sprint name required" });
+  const db = readDb(); const userName = getActor(req, db);
+  if (!db.sprints) db.sprints = [];
+  const sprint = { id: id("spr"), name, startDate, endDate, goal: goal || "", capacity: capacity || 40, taskIds: [], status: "planned", createdBy: userName, createdAt: new Date().toISOString() };
+  db.sprints.push(sprint); writeDb(db); res.json(sprint);
+});
+
+app.put("/api/sprints/:sid", (req, res) => {
+  const db = readDb();
+  const s = (db.sprints||[]).find(x => x.id === req.params.sid);
+  if (!s) return res.status(404).json({ error: "Not found" });
+  Object.assign(s, req.body); writeDb(db); res.json(s);
+});
+
+app.post("/api/sprints/:sid/tasks", (req, res) => {
+  const { projectId, taskId } = req.body;
+  const db = readDb();
+  const s = (db.sprints||[]).find(x => x.id === req.params.sid);
+  if (!s) return res.status(404).json({ error: "Not found" });
+  if (!s.taskIds.find(t => t.taskId === taskId)) s.taskIds.push({ projectId, taskId });
+  writeDb(db); res.json(s);
+});
+
+app.delete("/api/sprints/:sid/tasks/:taskId", (req, res) => {
+  const db = readDb();
+  const s = (db.sprints||[]).find(x => x.id === req.params.sid);
+  if (!s) return res.status(404).json({ error: "Not found" });
+  s.taskIds = s.taskIds.filter(t => t.taskId !== req.params.taskId);
+  writeDb(db); res.json(s);
+});
+
+// ═══════════════════════════════════════════════════════
+// TASK READ RECEIPTS
+// ═══════════════════════════════════════════════════════
+app.post("/api/projects/:pid/tasks/:tid/seen", (req, res) => {
+  const db = readDb(); const userName = getActor(req, db);
+  const p = db.projects.find(x => x.id === req.params.pid);
+  const t = p && p.tasks.find(x => x.id === req.params.tid);
+  if (!t) return res.status(404).json({ error: "Not found" });
+  if (!t.seenBy) t.seenBy = [];
+  if (!t.seenBy.includes(userName)) t.seenBy.push(userName);
+  writeDb(db); res.json({ seenBy: t.seenBy });
+});
+
+// ═══════════════════════════════════════════════════════
+// ACHIEVEMENTS
+// ═══════════════════════════════════════════════════════
+app.get("/api/achievements", (req, res) => {
+  const db = readDb(); const userName = getActor(req, db);
+  const account = (db.accounts||[]).find(a => a.username === userName);
+  const unlocked = account ? (account.achievements || []) : [];
+  // "pioneer" auto-unlock on first visit
+  if (account && !unlocked.includes("pioneer")) { checkAchievements(account, db); writeDb(db); }
+  const result = ACHIEVEMENTS.map(a => ({ id: a.id, icon: a.icon, name: a.name, desc: a.desc, unlocked: unlocked.includes(a.id) }));
+  res.json(result);
+});
+
+// ═══════════════════════════════════════════════════════
+// TASK TEMPLATES
+// ═══════════════════════════════════════════════════════
+app.get("/api/task-templates", (req, res) => {
+  const db = readDb();
+  res.json(db.taskTemplates || []);
+});
+
+app.post("/api/task-templates", (req, res) => {
+  const { name, title, priority, notes, checklist } = req.body;
+  if (!name) return res.status(400).json({ error: "Template name required" });
+  const db = readDb();
+  if (!db.taskTemplates) db.taskTemplates = [];
+  const tmpl = { id: id("tmpl"), name, title: title||name, priority: priority||"medium", notes: notes||"", checklist: checklist||[], createdAt: new Date().toISOString() };
+  db.taskTemplates.push(tmpl); writeDb(db); res.json(tmpl);
+});
+
+app.delete("/api/task-templates/:id", (req, res) => {
+  const db = readDb();
+  if (!db.taskTemplates) db.taskTemplates = [];
+  db.taskTemplates = db.taskTemplates.filter(t => t.id !== req.params.id);
+  writeDb(db); res.json({ ok: true });
+});
+
+// ═══════════════════════════════════════════════════════
+// XP LEADERBOARD
+// ═══════════════════════════════════════════════════════
+app.get("/api/leaderboard", (req, res) => {
+  const db = readDb();
+  const board = (db.accounts || []).map(a => {
+    const r = getRank(a.xp || 0);
+    return { username: a.username, xp: a.xp || 0, rank: r.rank, level: r.level, achievements: (a.achievements||[]).length, tasksCompleted: a.tasksCompleted || 0 };
+  }).sort((a, b) => b.xp - a.xp).slice(0, 20);
+  res.json(board);
+});
+
+// ═══════════════════════════════════════════════════════
+// CALENDAR EVENTS
+// ═══════════════════════════════════════════════════════
+app.get("/api/calendar", (req, res) => {
+  const db = readDb();
+  const { year, month } = req.query;
+  const events = [];
+  (db.projects || []).forEach(p => {
+    (p.tasks || []).forEach(t => {
+      if (!t.dueDate) return;
+      const d = new Date(t.dueDate);
+      if (year && d.getFullYear() !== parseInt(year)) return;
+      if (month !== undefined && d.getMonth() !== parseInt(month)) return;
+      events.push({ taskId: t.id, projectId: p.id, projectTitle: p.title, projectColor: p.color || "#00ff41", title: t.title, dueDate: t.dueDate, priority: t.priority, status: t.status, completed: t.completed });
+    });
+  });
+  res.json(events);
+});
+
+// ═══════════════════════════════════════════════════════
+// PROJECT TEMPLATES
+// ═══════════════════════════════════════════════════════
+app.get("/api/project-templates", (req, res) => {
+  const db = readDb();
+  res.json(db.projectTemplates || []);
+});
+
+app.post("/api/project-templates", (req, res) => {
+  const { name, projectId } = req.body;
+  const db = readDb();
+  if (!db.projectTemplates) db.projectTemplates = [];
+  let tasks = [];
+  if (projectId) {
+    const src = db.projects.find(p => p.id === projectId);
+    if (src) tasks = (src.tasks||[]).map(t => ({ title: t.title, priority: t.priority, notes: t.notes||"", checklist: (t.checklist||[]).map(c=>({text:c.text})) }));
+  }
+  const tmpl = { id: id("ptmpl"), name: name||"Template", tasks, createdAt: new Date().toISOString() };
+  db.projectTemplates.push(tmpl); writeDb(db); res.json(tmpl);
+});
+
+app.post("/api/projects/from-template/:tmplId", (req, res) => {
+  const { title, description } = req.body;
+  const db = readDb(); const userName = getActor(req, db);
+  if (!db.projectTemplates) return res.status(404).json({ error: "No templates" });
+  const tmpl = db.projectTemplates.find(t => t.id === req.params.tmplId);
+  if (!tmpl) return res.status(404).json({ error: "Template not found" });
+  const newProj = {
+    id: id("p"), title: title||tmpl.name, description: description||"", status: "planned", deadline: "", color: "#00ff41", pinned: false, tags: [], attachments: [], createdBy: userName, createdAt: new Date().toISOString(),
+    tasks: (tmpl.tasks||[]).map(t => ({ id: id("t"), ...t, completed: false, status: "todo", assignees: [], dueDate: "", votes: {}, checklist: (t.checklist||[]).map(c=>({id:id("chk"),text:c.text,done:false})), comments: [], timeLogs: [], seenBy: [], createdAt: new Date().toISOString() }))
+  };
+  db.projects.push(newProj);
+  logActivity(db, `Project "${newProj.title}" created from template "${tmpl.name}"`, { action: "created", projectId: newProj.id, userName });
+  writeDb(db); res.json(newProj);
+});
+
+// ═══════════════════════════════════════════════════════
+// AUTOMATIONS & PROTOCOLS
+// ═══════════════════════════════════════════════════════
+app.get("/api/automations", (req, res) => {
+  const db = readDb(); if(!db.automations) db.automations = [];
+  res.json(db.automations);
+});
+app.post("/api/automations", (req, res) => {
+  const db = readDb(); const userName = getActor(req, db);
+  if(!db.automations) db.automations = [];
+  const rule = { id: id("arm"), ...req.body, createdBy: userName, createdAt: new Date().toISOString() };
+  db.automations.push(rule); writeDb(db); res.json(rule);
+});
+app.delete("/api/automations/:id", (req, res) => {
+  const db = readDb(); if(!db.automations) db.automations = [];
+  db.automations = db.automations.filter(r => r.id !== req.params.id);
+  writeDb(db); res.json({ success: true });
+});
+
+// ═══════════════════════════════════════════════════════
+// NEXUS DIRECTIVES (KNOWLEDGE BASE)
+// ═══════════════════════════════════════════════════════
+app.get("/api/knowledge", (req, res) => {
+  const db = readDb(); if(!db.knowledge) db.knowledge = [];
+  res.json(db.knowledge);
+});
+app.post("/api/knowledge", (req, res) => {
+  const db = readDb(); const userName = getActor(req, db);
+  if(!db.knowledge) db.knowledge = [];
+  const article = { id: id("wiki"), title: req.body.title, content: req.body.content, author: userName, votes: 0, createdAt: new Date().toISOString() };
+  db.knowledge.push(article); writeDb(db); res.json(article);
+});
+app.put("/api/knowledge/:id", (req, res) => {
+  const db = readDb(); if(!db.knowledge) db.knowledge = [];
+  const article = db.knowledge.find(a => a.id === req.params.id);
+  if(!article) return res.status(404).json({error: "Not found"});
+  article.title = req.body.title || article.title;
+  article.content = req.body.content || article.content;
+  writeDb(db); res.json(article);
+});
+app.delete("/api/knowledge/:id", (req, res) => {
+  const db = readDb(); if(!db.knowledge) db.knowledge = [];
+  db.knowledge = db.knowledge.filter(a => a.id !== req.params.id);
+  writeDb(db); res.json({ success: true });
 });
 
 app.post("/api/comms", (req, res) => {

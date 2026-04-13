@@ -2,12 +2,20 @@
   "projects": [],
   "activity": [
     {
+      "id": "a_1776067259060_997",
+      "message": "New operative \"TESTUSER\" enlisted",
+      "timestamp": "2026-04-13T08:00:59.060Z",
+      "action": "created",
+      "projectId": "",
+      "userName": "TESTUSER"
+    },
+    {
+      "action": "deleted",
+      "userName": "PLAYER_1",
+      "projectId": "p_1775902351052_4020",
       "id": "a_1776064661579_4709",
       "message": "Project \"QUANTUM\" deleted",
-      "timestamp": "2026-04-13T07:17:41.580Z",
-      "action": "deleted",
-      "projectId": "p_1775902351052_4020",
-      "userName": "PLAYER_1"
+      "timestamp": "2026-04-13T07:17:41.580Z"
     },
     {
       "action": "created",
@@ -260,6 +268,11 @@
       "id": "u_1775904840546_1571",
       "name": "HARSHEET",
       "color": "#4dff88"
+    },
+    {
+      "id": "u_1776067259060_3893",
+      "name": "TESTUSER",
+      "color": "#00e639"
     }
   ],
   "accounts": [
@@ -321,6 +334,16 @@
       "avatarColor": "#4dff88",
       "role": "OPERATIVE",
       "createdAt": "2026-04-11T10:54:00.546Z",
+      "provider": "local"
+    },
+    {
+      "id": "acc_1776067258935_184",
+      "username": "TESTUSER",
+      "email": "testuser@example.com",
+      "passwordHash": "e93b0a3a109137af5f0c1679134b3aed:356244385696cf28ed4903e78b8a7197387dca80beb70d9975c34711304f9c2a36a0686c851d7b7977c5103c89de865f72ef3ad3e5e0ee66cb20767ea00a7594",
+      "avatarColor": "#00e639",
+      "role": "OPERATIVE",
+      "createdAt": "2026-04-13T08:00:59.060Z",
       "provider": "local"
     }
   ]
