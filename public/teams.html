@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS PAM — Squad Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/chatbot.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <div class="logo-wrapper" onclick="window.location.href='/index.html'" style="cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none;">
+        <span style="color:var(--g);font-size:1.25rem;text-shadow:0 0 15px rgba(0,255,65,.5)">NEXUS</span>
+        <span style="display:flex;align-items:center;gap:4px;color:#fff;font-size:1.25rem">
+          P<svg style="width:1.2rem;height:1.2rem;filter:drop-shadow(0 0 5px rgba(0,255,65,.5))" viewBox="0 0 16 16"><rect x="7" y="0" width="2" height="4" fill="#fff"/><rect x="6" y="4" width="4" height="6" fill="#00ff41"/><rect x="4" y="6" width="8" height="4" fill="#00ff41"/><rect x="2" y="10" width="12" height="2" fill="#008f11"/><rect x="0" y="12" width="4" height="4" fill="#ff0055"/><rect x="12" y="12" width="4" height="4" fill="#ff0055"/></svg>M
+        </span>
+      </div>
+      <div class="nav-right">
+        <a class="nav-link" href="/index.html">[HOME]</a>
+        <a class="nav-link" href="/dashboard.html">[DASHBOARD]</a>
+        <a class="nav-link" href="/projects.html">[PROJECTS]</a>
+        <a class="nav-link active" href="/teams.html">[SQUADS]</a>
+        <a class="nav-link" href="/activity.html">[ACTIVITY]</a>
+        <div id="currentUserSelect" class="nav-link" style="border-color:var(--y);color:var(--y);pointer-events:none;padding:6px 12px;"></div>
+        <button style="border-color:#ff3d3d;color:#ff8a8a;font-size:.65rem;padding:6px 12px" onclick="localStorage.removeItem('nexus_token');localStorage.removeItem('nexus_user');window.location.href='/login.html'">[LOGOUT]</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="page-root">
+    <div class="content-wrap">
+
+      <!-- Create Squad -->
+      <section class="panel" style="border-color:var(--m);background:rgba(255,79,216,.04)">
+        <h1 class="page-title" style="color:var(--m)">▸ FORM NEW SQUAD</h1>
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-top:12px">
+          <input id="teamName" placeholder="SQUAD NAME" style="border-color:var(--m);color:var(--m)" />
+          <input id="teamDesc" placeholder="MISSION OBJECTIVE" />
+          <input id="teamColor" type="color" value="#00ff41" style="width:46px;height:40px;cursor:pointer;border:1px solid var(--m);background:transparent;padding:2px" />
+        </div>
+        <div style="margin-top:10px">
+          <button id="createTeamBtn" style="border-color:var(--m);color:var(--m)">DEPLOY SQUAD</button>
+        </div>
+      </section>
+
+      <!-- My Squads -->
+      <section class="panel">
+        <h2 class="page-title">▸ MY SQUADS</h2>
+        <div id="teamsList" style="margin-top:12px"></div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="/auth-guard.js"></script>
+  <script>
+    const token = () => localStorage.getItem('nexus_token');
+    const me = JSON.parse(localStorage.getItem('nexus_user') || '{}');
+    const username = me.username || me.name || 'OPERATIVE';
+
+    document.getElementById('currentUserSelect').textContent = `[ ${username} ]`;
+
+    const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    async function api(url, opts = {}) {
+      const r = await fetch(url, {
+        headers: { 'Content-Type': 'application/json', 'x-user': username, 'Authorization': `Bearer ${token()}` },
+        ...opts
+      });
+      return r.json();
+    }
+
+    async function loadTeams() {
+      const teams = await api('/api/teams');
+      const el = document.getElementById('teamsList');
+      if (!teams.length) {
+        el.innerHTML = `<div class="empty-state">[ NO SQUADS FORMED — DEPLOY FIRST ] <span class="blink">_</span></div>`;
+        return;
+      }
+      el.innerHTML = teams.map(t => `
+        <div class="project-card" style="border-color:${t.color};margin-bottom:16px">
+          <div class="project-header-row">
+            <div>
+              <div style="color:${t.color};font-size:1rem;font-family:'Press Start 2P'">${esc(t.name)}</div>
+              <div style="color:rgba(255,255,255,.5);font-size:.75rem;margin-top:4px">${esc(t.description)}</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              ${t.owner === username ? `<button onclick="deleteTeam('${t.id}')" style="border-color:var(--r);color:var(--r);font-size:.55rem">DISBAND</button>` : ''}
+              <span style="color:rgba(255,255,255,.4);font-size:.65rem">OWNER: <span style="color:${t.color}">${esc(t.owner)}</span></span>
+            </div>
+          </div>
+          <div style="padding:10px 16px">
+            <div style="font-size:.6rem;color:rgba(255,255,255,.5);margin-bottom:8px">OPERATIVES [${t.members.length}]:</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+              ${t.members.map(m => `
+                <div style="display:inline-flex;align-items:center;gap:6px;border:1px solid ${t.color}44;padding:4px 10px;font-size:.7rem;color:${t.color}">
+                  ${esc(m)}
+                  ${t.owner === username && m !== t.owner ? `<span style="cursor:pointer;color:var(--r)" onclick="removeMember('${t.id}','${m}')">✕</span>` : ''}
+                </div>
+              `).join('')}
+            </div>
+            ${t.owner === username ? `
+              <div style="display:flex;gap:8px">
+                <input id="addMember_${t.id}" placeholder="ADD OPERATIVE USERNAME" style="flex:1;font-size:.65rem" />
+                <button onclick="addMember('${t.id}')" style="border-color:${t.color};color:${t.color};font-size:.55rem">+ ENLIST</button>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('createTeamBtn').addEventListener('click', async () => {
+      const name = document.getElementById('teamName').value.trim();
+      const description = document.getElementById('teamDesc').value.trim();
+      const color = document.getElementById('teamColor').value;
+      if (!name) { alert('SQUAD NAME REQUIRED'); return; }
+      await api('/api/teams', { method:'POST', body: JSON.stringify({ name, description, color }) });
+      document.getElementById('teamName').value = '';
+      document.getElementById('teamDesc').value = '';
+      loadTeams();
+    });
+
+    async function deleteTeam(id) {
+      if (!confirm('DISBAND THIS SQUAD?')) return;
+      await api(`/api/teams/${id}`, { method: 'DELETE' });
+      loadTeams();
+    }
+
+    async function addMember(teamId) {
+      const input = document.getElementById(`addMember_${teamId}`);
+      const username = input.value.trim();
+      if (!username) return;
+      await api(`/api/teams/${teamId}/members`, { method:'POST', body: JSON.stringify({ username }) });
+      input.value = '';
+      loadTeams();
+    }
+
+    async function removeMember(teamId, username) {
+      await api(`/api/teams/${teamId}/members/${username}`, { method: 'DELETE' });
+      loadTeams();
+    }
+
+    loadTeams();
+  </script>
+  <script src="/chatbot.js"></script>
+  <footer class="system-footer">
+    <span>[ OXYGEN: 98% ]</span><span>[ SHIELDS: ACTIVE ]</span><span class="blink">_ UPTIME: OK _</span>
+  </footer>
+</body>
+</html>

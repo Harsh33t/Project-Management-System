@@ -10,6 +10,13 @@
   --y-glow: 0 0 10px rgba(255, 215, 0, 0.4);
 }
 
+/* ── THEME OVERRIDES ─────────────────────────────────── */
+[data-theme="cyan"]    { --g:#00d9ff; --g-dim:#003d4d; --g-glow:0 0 10px rgba(0,217,255,.5); }
+[data-theme="magenta"] { --g:#ff4fd8; --g-dim:#4d0040; --g-glow:0 0 10px rgba(255,79,216,.5); }
+[data-theme="gold"]    { --g:#ffd700; --g-dim:#4d3f00; --g-glow:0 0 10px rgba(255,215,0,.5);  }
+[data-theme="volcanic"]{ --g:#ff6633; --g-dim:#4d1a00; --g-glow:0 0 10px rgba(255,102,51,.5); }
+[data-theme="void"]    { --g:#aa00ff; --g-dim:#2a0044; --g-glow:0 0 10px rgba(170,0,255,.5);  }
+
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
 
 * {

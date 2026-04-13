@@ -38,6 +38,14 @@
   }
 })();
 
+// ── THEME PERSISTENCE ──────────────────────────────────
+(function applyStoredTheme() {
+  const t = localStorage.getItem('nexus_theme');
+  if (t && t !== 'green') {
+    document.documentElement.setAttribute('data-theme', t);
+  }
+})();
+
 /* ═══════════════════════════════════════════════════════
    NEXUS TACTICAL AUDIO SYSTEM
    Synthesizes 8-bit sound effects on-the-fly

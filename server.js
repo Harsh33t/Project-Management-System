@@ -183,9 +183,20 @@ function readDb() {
   if (!Array.isArray(db.users) || !db.users.length) db.users = defaultUsers;
   if (!Array.isArray(db.accounts)) db.accounts = [];
   
-  // Ensure XP and messages array exists
+  // Ensure XP, teams, messages
   db.accounts.forEach(a => { if (a.xp === undefined) a.xp = 0; });
   if (!db.messages) db.messages = [];
+  if (!db.teams) db.teams = [];
+  // Ensure projects have tags and pinned fields
+  (db.projects || []).forEach(p => {
+    if (!p.tags) p.tags = [];
+    if (p.pinned === undefined) p.pinned = false;
+    if (!p.color) p.color = '#00ff41';
+    (p.tasks || []).forEach(t => {
+      if (!t.tags) t.tags = [];
+      if (!t.comments) t.comments = [];
+    });
+  });
   db.projects = (db.projects || []).map((p) => ({
     createdAt: p.createdAt || new Date().toISOString(),
     attachments: Array.isArray(p.attachments) ? p.attachments : [],
@@ -1066,6 +1077,134 @@ app.get("/api/projects/:projectId/export", (req, res) => {
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "login.html"));
 });
+
+// ════════════════════════════════════════════════════════
+// TEAMS API
+// ════════════════════════════════════════════════════════
+
+app.get("/api/teams", (req, res) => {
+  const db = readDb();
+  const userName = getActor(req, db);
+  // Return teams where user is member or owner
+  const myTeams = db.teams.filter(t => t.owner === userName || (t.members || []).includes(userName));
+  res.json(myTeams);
+});
+
+app.post("/api/teams", (req, res) => {
+  const { name, description, color } = req.body;
+  if (!name) return res.status(400).json({ error: "Team name required" });
+  const db = readDb();
+  const userName = getActor(req, db);
+  const team = {
+    id: id("team"),
+    name, description: description || "",
+    color: color || "#00ff41",
+    owner: userName,
+    members: [userName],
+    projectIds: [],
+    createdAt: new Date().toISOString()
+  };
+  db.teams.push(team);
+  logActivity(db, `Team "${name}" created`, { action: "created", projectId: null, userName });
+  writeDb(db);
+  res.json(team);
+});
+
+app.put("/api/teams/:teamId", (req, res) => {
+  const db = readDb();
+  const userName = getActor(req, db);
+  const team = db.teams.find(t => t.id === req.params.teamId);
+  if (!team) return res.status(404).json({ error: "Team not found" });
+  if (team.owner !== userName) return res.status(403).json({ error: "Not team owner" });
+  const { name, description, color } = req.body;
+  if (name) team.name = name;
+  if (description !== undefined) team.description = description;
+  if (color) team.color = color;
+  writeDb(db);
+  res.json(team);
+});
+
+app.delete("/api/teams/:teamId", (req, res) => {
+  const db = readDb();
+  const userName = getActor(req, db);
+  const idx = db.teams.findIndex(t => t.id === req.params.teamId);
+  if (idx === -1) return res.status(404).json({ error: "Team not found" });
+  if (db.teams[idx].owner !== userName) return res.status(403).json({ error: "Not team owner" });
+  db.teams.splice(idx, 1);
+  writeDb(db);
+  res.json({ ok: true });
+});
+
+app.post("/api/teams/:teamId/members", (req, res) => {
+  const { username } = req.body;
+  if (!username) return res.status(400).json({ error: "Username required" });
+  const db = readDb();
+  const team = db.teams.find(t => t.id === req.params.teamId);
+  if (!team) return res.status(404).json({ error: "Team not found" });
+  if (!team.members.includes(username)) team.members.push(username);
+  writeDb(db);
+  res.json(team);
+});
+
+app.delete("/api/teams/:teamId/members/:username", (req, res) => {
+  const db = readDb();
+  const team = db.teams.find(t => t.id === req.params.teamId);
+  if (!team) return res.status(404).json({ error: "Team not found" });
+  team.members = team.members.filter(m => m !== req.params.username);
+  writeDb(db);
+  res.json(team);
+});
+
+app.post("/api/teams/:teamId/projects/:projectId", (req, res) => {
+  const db = readDb();
+  const team = db.teams.find(t => t.id === req.params.teamId);
+  if (!team) return res.status(404).json({ error: "Team not found" });
+  if (!team.projectIds.includes(req.params.projectId)) team.projectIds.push(req.params.projectId);
+  writeDb(db);
+  res.json(team);
+});
+
+// Project PIN endpoint
+app.put("/api/projects/:projectId/pin", (req, res) => {
+  const db = readDb();
+  const project = db.projects.find(p => p.id === req.params.projectId);
+  if (!project) return res.status(404).json({ error: "Not found" });
+  project.pinned = !project.pinned;
+  writeDb(db);
+  res.json({ pinned: project.pinned });
+});
+
+// Project COLOR endpoint
+app.put("/api/projects/:projectId/color", (req, res) => {
+  const { color } = req.body;
+  const db = readDb();
+  const project = db.projects.find(p => p.id === req.params.projectId);
+  if (!project) return res.status(404).json({ error: "Not found" });
+  project.color = color || "#00ff41";
+  writeDb(db);
+  res.json({ color: project.color });
+});
+
+// Task COMMENT endpoint
+app.post("/api/projects/:projectId/tasks/:taskId/comments", (req, res) => {
+  const { text } = req.body;
+  if (!text) return res.status(400).json({ error: "Comment text required" });
+  const db = readDb();
+  const userName = getActor(req, db);
+  const project = db.projects.find(p => p.id === req.params.projectId);
+  if (!project) return res.status(404).json({ error: "Not found" });
+  const task = project.tasks.find(t => t.id === req.params.taskId);
+  if (!task) return res.status(404).json({ error: "Task not found" });
+  if (!task.comments) task.comments = [];
+  const comment = { id: id("cmt"), text, user: userName, timestamp: new Date().toISOString() };
+  task.comments.push(comment);
+  writeDb(db);
+  res.json(comment);
+});
+
+// ════════════════════════════════════════════════════════
+// SQUAD COMMS
+// ════════════════════════════════════════════════════════
 
 app.get("/api/comms", (req, res) => {
   const db = readDb();

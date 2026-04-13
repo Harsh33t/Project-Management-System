@@ -1,443 +1,692 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nexus PAM Home</title>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <title>NEXUS PAM — Tactical Command Platform</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/chatbot.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --g: #00ff41;
+      --g-dim: rgba(0,255,65,.25);
+      --r: #ff0055;
+      --c: #00d9ff;
+      --y: #ffd700;
+      --m: #ff4fd8;
+    }
+
+    body {
+      background: #000;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      font-family: 'Press Start 2P', monospace;
+      color: #fff;
+    }
+
+    /* ─── STARFIELD ─────────────────────────────────────── */
+    #bgCanvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ─── HERO / TITLE SCREEN ───────────────────────────── */
+    #heroScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity .8s ease;
+    }
+
+    .hero-score-hud {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 20px 30px;
+      font-size: .55rem;
+      pointer-events: none;
+    }
+
+    .hud-left { color: var(--g); }
+    .hud-right { color: rgba(255,255,255,.5); text-align: right; }
+    .hud-center { color: var(--y); text-align: center; }
+
+    .hero-title {
+      text-align: center;
+      line-height: 1;
+      user-select: none;
+    }
+
+    .hero-title .nexus-word {
+      font-size: clamp(3rem, 14vw, 10rem);
+      color: var(--g);
+      text-shadow: 0 0 20px rgba(0,255,65,.6), 0 0 60px rgba(0,255,65,.2);
+      display: block;
+      letter-spacing: .1em;
+    }
+
+    .hero-title .pam-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .3em;
+      font-size: clamp(3rem, 14vw, 10rem);
+      margin-top: -.05em;
+    }
+
+    .hero-ship-svg {
+      width: clamp(2.5rem, 10vw, 8rem);
+      height: clamp(2.5rem, 10vw, 8rem);
+      animation: floatShip 3s ease-in-out infinite;
+      filter: drop-shadow(0 0 12px rgba(0,255,65,.7));
+    }
+
+    @keyframes floatShip {
+      0%,100% { transform: translateY(0) rotate(-3deg); }
+      50%      { transform: translateY(-12px) rotate(3deg); }
+    }
+
+    .hero-invader {
+      animation: wiggle 1.6s ease-in-out infinite alternate;
+      filter: drop-shadow(0 0 8px rgba(255,0,85,.8));
+      margin-bottom: 1.5rem;
+    }
+
+    @keyframes wiggle {
+      from { transform: translateX(-18px) rotate(-5deg); }
+      to   { transform: translateX(18px) rotate(5deg); }
+    }
+
+    .hero-nav {
+      display: flex;
+      gap: .8rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 2.5rem;
+    }
+
+    .hero-nav a, .hero-nav button {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .6rem;
+      padding: .6rem 1.2rem;
+      border: 1px solid;
+      background: transparent;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background .2s, box-shadow .2s;
+    }
+
+    .hero-nav .btn-g { border-color: var(--g); color: var(--g); }
+    .hero-nav .btn-g:hover { background: rgba(0,255,65,.12); box-shadow: 0 0 12px rgba(0,255,65,.3); }
+    .hero-nav .btn-y { border-color: var(--y); color: var(--y); }
+    .hero-nav .btn-y:hover { background: rgba(255,215,0,.12); box-shadow: 0 0 12px rgba(255,215,0,.3); }
+    .hero-nav .btn-c { border-color: var(--c); color: var(--c); }
+    .hero-nav .btn-c:hover { background: rgba(0,217,255,.12); box-shadow: 0 0 12px rgba(0,217,255,.3); }
+    .hero-nav .btn-r { border-color: var(--r); color: #ff8a8a; }
+    .hero-nav .btn-r:hover { background: rgba(255,0,85,.12); box-shadow: 0 0 12px rgba(255,0,85,.3); }
+
+    .blink { animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .insert-coin {
+      font-size: .5rem;
+      color: rgba(255,255,255,.6);
+      margin-top: 1.5rem;
+      letter-spacing: .2em;
+    }
+
+    /* ─── GAME CANVAS ────────────────────────────────────── */
+    #gameCanvas {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+    }
+
+    /* ─── GAME HUD ───────────────────────────────────────── */
+    #gameHUD {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      pointer-events: none;
+      padding: 16px 24px;
+      font-size: .6rem;
+    }
+
+    .game-hud-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      color: var(--g);
+    }
+
+    .game-hud-row span { color: #fff; }
+
+    #gameHUD .esc-hint {
+      margin-top: 8px;
+      font-size: .5rem;
+      opacity: .5;
+      color: var(--g);
+      text-align: center;
+    }
+
+    /* ─── THEME SWITCHER ─────────────────────────────────── */
+    #themeBar {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 50;
+      display: flex;
+      gap: 8px;
+      pointer-events: all;
+    }
+
+    .theme-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.3);
+      cursor: pointer;
+      transition: transform .2s, border-color .2s;
+    }
+
+    .theme-dot:hover, .theme-dot.active { transform: scale(1.4); border-color: #fff; }
+
+    /* ─── SCANLINES OVERLAY ──────────────────────────────── */
+    #scanlines {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,.08) 2px,
+        rgba(0,0,0,.08) 4px
+      );
+    }
+
+    /* ─── CRT VIGNETTE ───────────────────────────────────── */
+    #vignette {
+      position: fixed;
+      inset: 0;
+      z-index: 99;
+      pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,.7) 100%);
+    }
+
+    /* ─── SCROLL HINT ────────────────────────────────────── */
+    .scroll-hint {
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: .45rem;
+      color: rgba(255,255,255,.35);
+      animation: float 2s ease-in-out infinite;
+      letter-spacing: .2em;
+    }
+    @keyframes float { 0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)} }
+  </style>
 </head>
-
 <body>
-  <div
-    class="relative h-screen w-full bg-[#050505] text-white overflow-hidden flex flex-col uppercase tracking-widest font-['Press_Start_2P',_cursive] text-[10px]">
-    <style>
-      @keyframes move-stars {
-        from {
-          transform: translateY(0);
-        }
 
-        to {
-          transform: translateY(-1000px);
-        }
-      }
+<!-- Background starfield (no auth-guard needed) -->
+<canvas id="bgCanvas"></canvas>
 
-      @keyframes animate-laser {
-        from {
-          transform: translateY(0);
-        }
+<!-- Scanlines & Vignette overlays -->
+<div id="scanlines"></div>
+<div id="vignette"></div>
 
-        to {
-          transform: translateY(-150vh);
-        }
-      }
-
-      @keyframes explosion {
-        0% {
-          transform: scale(1);
-          opacity: 1;
-        }
-
-        100% {
-          transform: scale(2);
-          opacity: 0;
-        }
-      }
-
-      @keyframes float-ship {
-
-        0%,
-        100% {
-          transform: translateY(0) rotate(0deg);
-        }
-
-        50% {
-          transform: translateY(-15px) rotate(2deg);
-        }
-      }
-
-      @keyframes blink {
-        50% {
-          opacity: 0;
-        }
-      }
-
-      @keyframes enemy-wiggle {
-        from {
-          transform: translateX(-15px);
-        }
-
-        to {
-          transform: translateX(15px);
-        }
-      }
-
-      .stars-bg {
-        background: transparent;
-        box-shadow: 240px 10px #FFF, 400px 150px #FFF, 600px 400px #FFF, 800px 100px #FFF, 1200px 700px #FFF, 100px 800px #FFF, 1100px 300px #FFF;
-        animation: move-stars 80s linear infinite;
-      }
-
-      .hud-scanline {
-        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.05), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.05));
-        background-size: 100% 4px, 3px 100%;
-      }
-    </style>
-
-    <div class="fixed inset-0 z-0">
-      <div class="stars-bg absolute w-1 h-1"></div>
-      <div class="stars-bg absolute w-[2px] h-[2px] opacity-50" style="animation-duration: 120s; left: 10%"></div>
-      <div class="absolute inset-0 hud-scanline pointer-events-none z-50"></div>
+<!-- ══════════ HERO SCREEN ══════════ -->
+<div id="heroScreen">
+  <div class="hero-score-hud">
+    <div class="hud-left">
+      SCORE: <span style="color:#fff">040892</span><br>
+      LIVES: <span style="color:var(--r)">♥ ♥ ♥</span>
     </div>
-
-    <nav id="topNav"
-      class="absolute top-0 left-0 z-40 w-full p-6 md:p-10 flex justify-between items-start transition-opacity duration-1000 pointer-events-none">
-      <div class="flex flex-col gap-3">
-        <div class="text-[#00ff41]">SCORE: <span class="text-white">040892</span></div>
-        <div class="text-[#ff0055]">LIVES: <span class="text-white">♥♥♥</span></div>
-      </div>
-      <div class="text-center">
-        <div class="text-amber-400 mb-2">STAGE 01</div>
-        <div class="text-[8px] animate-[blink_1s_step-end_infinite] text-white/80">INSERT COIN</div>
-      </div>
-      <div class="hidden md:flex flex-col items-end gap-3">
-        <div class="text-white/60">HI-SCORE: 99999</div>
-      </div>
-    </nav>
-
-    <main class="relative z-20 flex-grow flex flex-col items-center justify-center px-6">
-      <div id="topEnemy"
-        class="mb-8 animate-[enemy-wiggle_2s_ease-in-out_infinite_alternate] transition-all duration-1000 origin-center">
-        <svg width="60" height="40" viewBox="0 0 15 10" fill="#ff0055" class="drop-shadow-[0_0_8px_rgba(255,0,85,0.6)]">
-          <rect x="4" y="0" width="7" height="1"></rect>
-          <rect x="3" y="1" width="9" height="1"></rect>
-          <rect x="2" y="2" width="11" height="1"></rect>
-          <rect x="2" y="3" width="2" height="1"></rect>
-          <rect x="5" y="3" width="5" height="1"></rect>
-          <rect x="11" y="3" width="2" height="1"></rect>
-          <rect x="0" y="4" width="15" height="1"></rect>
-          <rect x="2" y="5" width="2" height="1"></rect>
-          <rect x="5" y="5" width="5" height="1"></rect>
-          <rect x="11" y="5" width="2" height="1"></rect>
-        </svg>
-      </div>
-
-      <h1 id="mainTitle"
-        class="text-[16vw] md:text-[12vw] leading-none text-white text-center flex flex-col items-center select-none transition-opacity duration-1000 drop-shadow-[0_0_20px_rgba(0,255,65,0.2)]">
-        <span class="text-[#00ff41] drop-shadow-[0_0_15px_rgba(0,255,65,0.5)]">nexus</span>
-        <div class="flex items-center -mt-2 md:-mt-8">
-          <span>p</span>
-          <div id="logoShipWrapper"
-            class="w-[14vw] h-[14vw] md:w-[10vw] md:h-[10vw] mx-2 md:mx-4 relative flex items-center justify-center">
-            <div id="logoShip" class="w-full h-full animate-[float-ship_3s_ease-in-out_infinite] z-50">
-              <svg viewBox="0 0 16 16" class="w-full h-full drop-shadow-[0_0_12px_rgba(0,255,65,0.5)]">
-                <rect x="7" y="0" width="2" height="4" fill="#ffffff"></rect>
-                <rect x="6" y="4" width="4" height="6" fill="#00ff41"></rect>
-                <rect x="4" y="6" width="8" height="4" fill="#00ff41"></rect>
-                <rect x="2" y="10" width="12" height="2" fill="#008f11"></rect>
-                <rect x="0" y="12" width="4" height="4" fill="#ff0055"></rect>
-                <rect x="12" y="12" width="4" height="4" fill="#ff0055"></rect>
-                <rect x="7" y="10" width="2" height="6" fill="#00ff41"></rect>
-              </svg>
-            </div>
-          </div>
-          <span>m</span>
-        </div>
-      </h1>
-
-      <div id="bottomLinks" class="mt-12 flex flex-wrap gap-3 justify-center transition-opacity duration-1000">
-        <a href="/index.html" class="border border-white/40 px-4 py-2 text-white hover:bg-white/10">[HOME]</a>
-        <a href="/dashboard.html"
-          class="border border-[#00ff41] px-4 py-2 text-[#00ff41] hover:bg-[#00ff41]/15">[DASHBOARD]</a>
-        <a href="/projects.html"
-          class="border border-amber-400 px-4 py-2 text-amber-400 hover:bg-amber-400/15">[PROJECTS]</a>
-        <a href="/activity.html"
-          class="border border-[#ff0055] px-4 py-2 text-[#ff73a2] hover:bg-[#ff0055]/15">[ACTIVITY]</a>
-        <button
-          onclick="localStorage.removeItem('nexus_token');localStorage.removeItem('nexus_user');window.location.href='/login.html'"
-          class="border border-red-500/60 px-4 py-2 text-red-400 hover:bg-red-500/15">[LOGOUT]</button>
-      </div>
-    </main>
-
-    <div id="gameUI"
-      class="fixed inset-0 pointer-events-none z-40 opacity-0 transition-opacity duration-1000 hidden items-center justify-between px-10">
-      <div class="text-[#00ff41] text-lg mt-20">SCORE: <span id="gameScore">0</span></div>
-      <div class="text-[#00ff41] text-sm mt-20 opacity-50">[PRESS ESC TO EXIT]</div>
+    <div class="hud-center">
+      STAGE 01<br>
+      <span class="blink" style="font-size:.45rem; color:rgba(255,255,255,.5)">INSERT COIN</span>
     </div>
-
-    <!-- Space Invaders Game Zone -->
-    <div id="enemyZone" class="fixed inset-0 z-30 pointer-events-none overflow-hidden">
-      <!-- Enemies will be spawned here -->
+    <div class="hud-right">
+      HI-SCORE: 99999<br>
+      <span style="font-size:.45rem; color:rgba(0,217,255,.6)">SECTOR ALPHA</span>
     </div>
   </div>
 
-  <script src="/auth-guard.js"></script>
-  <script src="/chatbot.js"></script>
-  <script>
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playShootSound() {
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
-      gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.1);
-    }
+  <!-- Enemy invader above title -->
+  <div class="hero-invader">
+    <svg width="56" height="40" viewBox="0 0 15 10" fill="var(--r)">
+      <rect x="4" y="0" width="7" height="1"/><rect x="3" y="1" width="9" height="1"/>
+      <rect x="2" y="2" width="11" height="1"/><rect x="2" y="3" width="2" height="1"/>
+      <rect x="5" y="3" width="5" height="1"/><rect x="11" y="3" width="2" height="1"/>
+      <rect x="0" y="4" width="15" height="1"/><rect x="2" y="5" width="2" height="1"/>
+      <rect x="5" y="5" width="5" height="1"/><rect x="11" y="5" width="2" height="1"/>
+    </svg>
+  </div>
 
-    function playExplosionSound() {
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(100, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.2);
-      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.2);
-    }
+  <!-- Main title -->
+  <div class="hero-title">
+    <span class="nexus-word">NEXUS</span>
+    <div class="pam-row">
+      <span>P</span>
+      <svg class="hero-ship-svg" viewBox="0 0 16 16">
+        <rect x="7" y="0" width="2" height="4" fill="#fff"/>
+        <rect x="6" y="4" width="4" height="6" fill="var(--g)"/>
+        <rect x="4" y="6" width="8" height="4" fill="var(--g)"/>
+        <rect x="2" y="10" width="12" height="2" fill="#008f11"/>
+        <rect x="0" y="12" width="4" height="4" fill="var(--r)"/>
+        <rect x="12" y="12" width="4" height="4" fill="var(--r)"/>
+        <rect x="7" y="10" width="2" height="6" fill="var(--g)"/>
+      </svg>
+      <span>M</span>
+    </div>
+  </div>
 
-    const ship = document.getElementById('logoShip');
-    const wrapper = document.getElementById('logoShipWrapper');
-    const enemyZone = document.getElementById('enemyZone');
-    const gameUI = document.getElementById('gameUI');
+  <!-- Nav links -->
+  <nav class="hero-nav">
+    <a href="/dashboard.html" class="btn-g">[DASHBOARD]</a>
+    <a href="/projects.html" class="btn-y">[PROJECTS]</a>
+    <a href="/activity.html" class="btn-c">[ACTIVITY]</a>
+    <button onclick="localStorage.removeItem('nexus_token');localStorage.removeItem('nexus_user');window.location.href='/login.html'" class="btn-r">[LOGOUT]</button>
+  </nav>
 
-    const fadeEls = [
-      document.getElementById('topNav'),
-      document.getElementById('mainTitle'),
-      document.getElementById('bottomLinks'),
-      document.getElementById('topEnemy')
-    ];
+  <div class="insert-coin blink">▼ SCROLL OR SWIPE UP TO LAUNCH GAME ▼</div>
 
-    let isDetached = false;
-    let gameActive = false;
-    let mouseX = window.innerWidth / 2;
-    let score = 0;
-    let gameScoreEl = document.getElementById('gameScore');
+  <!-- Scroll hint -->
+  <div class="scroll-hint">TACTICAL COMMAND PLATFORM v2.0</div>
+</div>
 
-    let enemies = [];
-    let spawnInterval;
+<!-- ══════════ ARCADE GAME ══════════ -->
+<canvas id="gameCanvas"></canvas>
+<div id="gameHUD">
+  <div class="game-hud-row">
+    <div>SCORE: <span id="hudScore">0</span></div>
+    <div>LEVEL: <span id="hudLevel">1</span></div>
+    <div>LIVES: <span id="hudLives">♥ ♥ ♥</span></div>
+  </div>
+  <div class="esc-hint blink">[ ESC ] ABORT MISSION</div>
+</div>
 
-    const invaderSVG = `<svg width="100%" height="100%" viewBox="0 0 15 10" fill="#ff0055" class="drop-shadow-[0_0_8px_rgba(255,0,85,0.6)]">
-        <rect x="4" y="0" width="7" height="1"></rect><rect x="3" y="1" width="9" height="1"></rect><rect x="2" y="2" width="11" height="1"></rect><rect x="2" y="3" width="2" height="1"></rect><rect x="5" y="3" width="5" height="1"></rect><rect x="11" y="3" width="2" height="1"></rect><rect x="0" y="4" width="15" height="1"></rect><rect x="2" y="5" width="2" height="1"></rect><rect x="5" y="5" width="5" height="1"></rect><rect x="11" y="5" width="2" height="1"></rect>
-      </svg>`;
+<!-- ══════════ THEME BAR ══════════ -->
+<div id="themeBar">
+  <div class="theme-dot active" style="background:var(--g)" data-theme="green" title="NEON GREEN"></div>
+  <div class="theme-dot" style="background:var(--c)" data-theme="cyan" title="CYBER CYAN"></div>
+  <div class="theme-dot" style="background:var(--m)" data-theme="magenta" title="PLASMA PINK"></div>
+  <div class="theme-dot" style="background:var(--y)" data-theme="gold" title="SOLAR GOLD"></div>
+  <div class="theme-dot" style="background:#ff6633" data-theme="volcanic" title="VOLCANIC"></div>
+  <div class="theme-dot" style="background:#aa00ff" data-theme="void" title="VOID PURPLE"></div>
+</div>
 
-    function startEnemySpawner() {
-      if (spawnInterval) clearInterval(spawnInterval);
-      score = 0;
-      gameScoreEl.innerText = score;
-      enemyZone.innerHTML = '';
-      enemies = [];
+<script src="/chatbot.js"></script>
+<script>
+// ════════════════════════════════════════════════════
+//  NEXUS PAM — LANDING PAGE ENGINE
+// ════════════════════════════════════════════════════
 
-      spawnInterval = setInterval(() => {
-        if (!gameActive) return;
+/* ──── STARFIELD ──────────────────────────────────── */
+(function() {
+  const c = document.getElementById('bgCanvas');
+  const ctx = c.getContext('2d');
+  let w, h, stars=[];
+  const resize = () => {
+    w = c.width = window.innerWidth;
+    h = c.height = window.innerHeight;
+    stars = Array.from({length:200}, () => ({
+      x: Math.random()*w, y: Math.random()*h,
+      s: Math.random()*2.2, v: Math.random()*.6+.1,
+      a: Math.random()*.7+.3
+    }));
+  };
+  window.addEventListener('resize', resize); resize();
+  const draw = () => {
+    ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(0,0,w,h);
+    stars.forEach(s=>{
+      ctx.fillStyle=`rgba(255,255,255,${s.a*(0.6+Math.random()*.4)})`;
+      ctx.fillRect(s.x,s.y,s.s,s.s);
+      s.y+=s.v; if(s.y>h){s.y=-4;s.x=Math.random()*w;}
+    });
+    requestAnimationFrame(draw);
+  };
+  draw();
+})();
 
-        const el = document.createElement('div');
-        el.className = 'absolute w-12 h-10 transition-transform duration-1000';
-        el.innerHTML = invaderSVG;
+/* ──── THEME SWITCHER ─────────────────────────────── */
+const THEMES = {
+  green:    {primary:'#00ff41', secondary:'#ff0055', accent:'#00d9ff'},
+  cyan:     {primary:'#00d9ff', secondary:'#ff0055', accent:'#00ff41'},
+  magenta:  {primary:'#ff4fd8', secondary:'#00d9ff', accent:'#00ff41'},
+  gold:     {primary:'#ffd700', secondary:'#ff0055', accent:'#00d9ff'},
+  volcanic: {primary:'#ff6633', secondary:'#ffaa00', accent:'#ff0055'},
+  void:     {primary:'#aa00ff', secondary:'#ff4fd8', accent:'#00d9ff'},
+};
+let activeTheme = localStorage.getItem('nexus_theme') || 'green';
 
-        const maxLeft = window.innerWidth - 60;
-        const left = Math.random() * maxLeft;
-        // Spawn enemies at top of screen
-        let y = -50;
+function applyTheme(name) {
+  const t = THEMES[name] || THEMES.green;
+  document.documentElement.style.setProperty('--g', t.primary);
+  document.documentElement.style.setProperty('--r', t.secondary);
+  document.documentElement.style.setProperty('--c', t.accent);
+  activeTheme = name;
+  localStorage.setItem('nexus_theme', name);
+  document.querySelectorAll('.theme-dot').forEach(d => {
+    d.classList.toggle('active', d.dataset.theme === name);
+  });
+}
 
-        el.style.left = left + 'px';
-        el.style.top = y + 'px';
-        enemyZone.appendChild(el);
+document.querySelectorAll('.theme-dot').forEach(d => {
+  d.addEventListener('click', () => applyTheme(d.dataset.theme));
+});
+applyTheme(activeTheme);
 
-        enemies.push({ el, x: left, y: y, active: true, speed: 2 + Math.random() * 3 });
-      }, 800); // spawn one every ~0.8s
-    }
+/* ──── AUDIO ENGINE ───────────────────────────────── */
+let audioCtx;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function beep(freq, dur, type='square', vol=0.06) {
+  const ac = getAudio();
+  const osc = ac.createOscillator();
+  const gain = ac.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, ac.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(freq*0.3, ac.currentTime+dur);
+  gain.gain.setValueAtTime(vol, ac.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+dur);
+  osc.connect(gain); gain.connect(ac.destination);
+  osc.start(); osc.stop(ac.currentTime+dur);
+}
+const SND = {
+  shoot:   ()=>beep(900,0.08,'square',0.05),
+  explode: ()=>beep(120,0.25,'sawtooth',0.1),
+  level:   ()=>{beep(400,0.1);setTimeout(()=>beep(600,0.15),120);setTimeout(()=>beep(800,0.2),260);},
+  die:     ()=>beep(80,0.5,'sawtooth',0.12),
+};
 
-    function stopEnemySpawner() {
-      if (spawnInterval) clearInterval(spawnInterval);
-      enemies.forEach(e => e.el.remove());
-      enemies = [];
-    }
+/* ──── GAME ENGINE ────────────────────────────────── */
+const heroScreen = document.getElementById('heroScreen');
+const gameCanvas = document.getElementById('gameCanvas');
+const gameHUD    = document.getElementById('gameHUD');
+const gc         = gameCanvas.getContext('2d');
 
-    function startGame() {
-      if (isDetached) return;
-      isDetached = true;
-      gameActive = true;
-      if (audioCtx.state === 'suspended') audioCtx.resume();
+const GS = {
+  running: false,
+  score: 0, lives: 3, level: 1,
+  ship: { x:0, y:0, w:40, h:48, targetX:0 },
+  bullets: [],
+  enemies: [],
+  particles: [],
+  spawnTimer: 0,
+  spawnInterval: 90,
+  bulletTimer: 0,
+  bulletInterval: 18,
+  frameCount: 0,
+};
 
-      const rect = wrapper.getBoundingClientRect();
+function startGame() {
+  GS.running = true;
+  GS.score = 0; GS.lives = 3; GS.level = 1;
+  GS.bullets = []; GS.enemies = []; GS.particles = [];
+  GS.ship.x = window.innerWidth / 2;
+  GS.ship.y = window.innerHeight - 80;
+  GS.ship.targetX = GS.ship.x;
+  GS.spawnInterval = 90;
+  GS.bulletInterval = 18;
+  GS.frameCount = 0;
 
-      ship.style.position = 'fixed';
-      ship.style.left = rect.left + 'px';
-      ship.style.top = rect.top + 'px';
-      ship.style.width = rect.width + 'px';
-      ship.style.height = rect.height + 'px';
-      ship.style.margin = '0';
-      ship.classList.remove('animate-[float-ship_3s_ease-in-out_infinite]');
+  gameCanvas.width = window.innerWidth;
+  gameCanvas.height = window.innerHeight;
+  gameCanvas.style.display = 'block';
+  gameHUD.style.display = 'block';
+  heroScreen.style.opacity = '0';
+  heroScreen.style.pointerEvents = 'none';
 
-      void ship.offsetWidth;
+  updateHUD();
+  gameLoop();
+}
 
-      ship.style.transition = 'all 0.8s cubic-bezier(0.25, 1, 0.5, 1)';
-      ship.style.top = 'calc(100vh - 100px)';
-      ship.style.left = '50%';
-      ship.style.transform = 'translateX(-50%) scale(0.8)';
+function stopGame() {
+  GS.running = false;
+  gameCanvas.style.display = 'none';
+  gameHUD.style.display = 'none';
+  heroScreen.style.opacity = '1';
+  heroScreen.style.pointerEvents = 'all';
+}
 
-      fadeEls.forEach(el => el.classList.add('opacity-0'));
+function updateHUD() {
+  document.getElementById('hudScore').textContent = GS.score;
+  document.getElementById('hudLevel').textContent = GS.level;
+  document.getElementById('hudLives').textContent = '♥ '.repeat(GS.lives).trim() || '☆ GAME OVER';
+}
 
-      gameUI.classList.remove('hidden');
-      setTimeout(() => gameUI.classList.remove('opacity-0'), 100);
+/* Ship SVG path helper */
+function drawShip(x, y, col='#00ff41') {
+  const s = GS.ship.w / 16;
+  gc.save();
+  gc.translate(x - GS.ship.w/2, y - GS.ship.h/2);
+  // White tip
+  gc.fillStyle = '#fff';
+  gc.fillRect(7*s, 0, 2*s, 4*s);
+  // Main body
+  gc.fillStyle = col;
+  gc.fillRect(6*s, 4*s, 4*s, 6*s);
+  gc.fillRect(4*s, 6*s, 8*s, 4*s);
+  // Dark base
+  gc.fillStyle = '#008f11';
+  gc.fillRect(2*s, 10*s, 12*s, 2*s);
+  // Thrusters
+  gc.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--r').trim() || '#ff0055';
+  gc.fillRect(0, 12*s, 4*s, 4*s);
+  gc.fillRect(12*s, 12*s, 4*s, 4*s);
+  // Engine flame
+  gc.fillStyle = col;
+  gc.fillRect(7*s, 10*s, 2*s, 6*s);
+  gc.restore();
 
-      startEnemySpawner();
-    }
+  // Ship glow
+  gc.save();
+  gc.shadowColor = col;
+  gc.shadowBlur = 18;
+  gc.fillStyle = 'transparent';
+  gc.fillRect(x-2,y-2,4,4);
+  gc.restore();
+}
 
-    function stopGame() {
-      if (!isDetached) return;
-      isDetached = false;
-      gameActive = false;
+function drawEnemy(e) {
+  const s = e.w / 15;
+  gc.save();
+  gc.translate(e.x - e.w/2, e.y - e.h/2);
+  gc.fillStyle = e.color;
+  gc.shadowColor = e.color;
+  gc.shadowBlur = 8;
+  // Invader pixel art
+  gc.fillRect(4*s,0,7*s,s);gc.fillRect(3*s,s,9*s,s);gc.fillRect(2*s,2*s,11*s,s);
+  gc.fillRect(2*s,3*s,2*s,s);gc.fillRect(5*s,3*s,5*s,s);gc.fillRect(11*s,3*s,2*s,s);
+  gc.fillRect(0,4*s,15*s,s);gc.fillRect(2*s,5*s,2*s,s);gc.fillRect(5*s,5*s,5*s,s);gc.fillRect(11*s,5*s,2*s,s);
+  gc.restore();
+}
 
-      const rect = wrapper.getBoundingClientRect();
+function spawnEnemy() {
+  const col = ['#ff0055','#ff4fd8','#ff6633','#aa00ff'][Math.floor(Math.random()*4)];
+  GS.enemies.push({
+    x: 40 + Math.random() * (gameCanvas.width - 80),
+    y: -30,
+    w: 44, h: 30,
+    color: col,
+    speed: 1.5 + GS.level * 0.4 + Math.random() * 1.5,
+    wobble: Math.random() * Math.PI * 2,
+    wobbleSpeed: 0.04 + Math.random() * 0.03,
+    active: true,
+  });
+}
 
-      ship.style.transition = 'all 0.6s cubic-bezier(0.5, 0, 0.2, 1)';
-      ship.style.top = rect.top + 'px';
-      ship.style.left = rect.left + 'px';
-      ship.style.width = rect.width + 'px';
-      ship.style.height = rect.height + 'px';
-      ship.style.transform = 'none';
+function spawnParticles(x, y, color, count=12) {
+  for (let i=0; i<count; i++) {
+    const angle = (Math.PI*2/count)*i + Math.random()*.5;
+    const speed = 2 + Math.random()*4;
+    GS.particles.push({
+      x, y, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed,
+      life: 1, decay: .03+Math.random()*.04, size: 2+Math.random()*4,
+      color
+    });
+  }
+}
 
-      fadeEls.forEach(el => el.classList.remove('opacity-0'));
+function gameLoop() {
+  if (!GS.running) return;
+  gc.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+  GS.frameCount++;
 
-      gameUI.classList.add('opacity-0');
-      setTimeout(() => gameUI.classList.add('hidden'), 1000);
-      stopEnemySpawner();
+  /* Level progression */
+  if (GS.frameCount % 600 === 0) {
+    GS.level++;
+    GS.spawnInterval = Math.max(30, 90 - GS.level * 8);
+    GS.bulletInterval = Math.max(10, 18 - GS.level);
+    SND.level();
+    updateHUD();
+  }
 
-      setTimeout(() => {
-        if (!isDetached) {
-          ship.style.position = 'static';
-          ship.style.transition = 'none';
-          ship.classList.add('animate-[float-ship_3s_ease-in-out_infinite]');
-        }
-      }, 600);
-    }
+  /* Ship smooth movement */
+  GS.ship.x += (GS.ship.targetX - GS.ship.x) * 0.12;
+  GS.ship.y = gameCanvas.height - 80;
 
-    // Detach trigger via mouse wheel
-    window.addEventListener('wheel', (e) => {
-      if (e.deltaY > 0 && !isDetached) {
-        startGame();
+  /* Spawn enemies */
+  GS.spawnTimer++;
+  if (GS.spawnTimer >= GS.spawnInterval) { spawnEnemy(); GS.spawnTimer=0; }
+
+  /* Auto-fire */
+  GS.bulletTimer++;
+  if (GS.bulletTimer >= GS.bulletInterval) {
+    GS.bullets.push({ x: GS.ship.x, y: GS.ship.y - GS.ship.h/2, speed: 16 });
+    SND.shoot();
+    GS.bulletTimer=0;
+  }
+
+  /* Update bullets */
+  GS.bullets = GS.bullets.filter(b => b.y > -20);
+  GS.bullets.forEach(b => {
+    b.y -= b.speed;
+    const shipCol = getComputedStyle(document.documentElement).getPropertyValue('--g').trim() || '#00ff41';
+    gc.fillStyle = shipCol;
+    gc.shadowColor = shipCol;
+    gc.shadowBlur = 10;
+    gc.fillRect(b.x-2, b.y, 4, 18);
+    gc.shadowBlur = 0;
+  });
+
+  /* Update enemies */
+  GS.enemies = GS.enemies.filter(e => e.active && e.y < gameCanvas.height + 50);
+  GS.enemies.forEach(e => {
+    if (!e.active) return;
+    e.y += e.speed;
+    e.wobble += e.wobbleSpeed;
+    e.x += Math.sin(e.wobble) * 1.5;
+
+    /* Bullet-enemy collision */
+    GS.bullets.forEach(b => {
+      if (!e.active) return;
+      if (b.x > e.x-e.w/2 && b.x < e.x+e.w/2 && b.y < e.y+e.h/2 && b.y > e.y-e.h/2) {
+        e.active = false;
+        b.y = -999;
+        GS.score += 100 * GS.level;
+        spawnParticles(e.x, e.y, e.color, 14);
+        SND.explode();
+        updateHUD();
       }
     });
 
-    // Detach trigger via touch swipe up
-    let touchStartY = 0;
-    window.addEventListener('touchstart', e => touchStartY = e.touches[0].clientY);
-    window.addEventListener('touchmove', e => {
-      const touchY = e.touches[0].clientY;
-      if (touchStartY - touchY > 50 && !isDetached) {
-        startGame();
+    /* Enemy reaches bottom */
+    if (e.y > gameCanvas.height - 20) {
+      e.active = false;
+      GS.lives--;
+      spawnParticles(e.x, gameCanvas.height-30, '#ff0055', 20);
+      SND.die();
+      updateHUD();
+      if (GS.lives <= 0) {
+        setTimeout(()=>{ stopGame(); }, 1500);
+        return;
       }
-    });
+    }
 
-    // Exit via escape key
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') stopGame();
-    });
+    if (e.active) drawEnemy(e);
+  });
 
-    // Mouse control for ship
-    window.addEventListener('mousemove', (e) => {
-      if (!gameActive) return;
-      mouseX = e.clientX;
-      ship.style.transition = 'none';
-      ship.style.left = mouseX + 'px';
-    });
+  /* Update particles */
+  GS.particles = GS.particles.filter(p => p.life > 0);
+  GS.particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    p.vy += 0.1; // gravity
+    p.life -= p.decay;
+    gc.globalAlpha = p.life;
+    gc.fillStyle = p.color;
+    gc.shadowColor = p.color;
+    gc.shadowBlur = 6;
+    gc.fillRect(p.x, p.y, p.size, p.size);
+    gc.shadowBlur = 0;
+    gc.globalAlpha = 1;
+  });
 
-    // Allow touch control too
-    window.addEventListener('touchmove', (e) => {
-      if (!gameActive) return;
-      mouseX = e.touches[0].clientX;
-      ship.style.transition = 'none';
-      ship.style.left = mouseX + 'px';
-    });
+  /* Draw ship */
+  const shipCol = getComputedStyle(document.documentElement).getPropertyValue('--g').trim() || '#00ff41';
+  drawShip(GS.ship.x, GS.ship.y, shipCol);
 
-    // Firing lasers automatically
-    setInterval(() => {
-      if (!gameActive) return;
+  /* Ground line */
+  gc.strokeStyle = 'rgba(0,255,65,.15)';
+  gc.lineWidth = 1;
+  gc.beginPath();
+  gc.moveTo(0, gameCanvas.height - 30);
+  gc.lineTo(gameCanvas.width, gameCanvas.height - 30);
+  gc.stroke();
 
-      playShootSound();
+  requestAnimationFrame(gameLoop);
+}
 
-      const laser = document.createElement('div');
-      laser.className = 'fixed w-1 h-6 bg-[#00ff41] shadow-[0_0_10px_#00ff41] z-40';
-      laser.style.left = mouseX + 'px';
-      laser.style.top = 'calc(100vh - 110px)';
-      document.body.appendChild(laser);
+/* ──── INPUT HANDLING ─────────────────────────────── */
+window.addEventListener('mousemove', e => {
+  GS.ship.targetX = e.clientX;
+});
+window.addEventListener('touchmove', e => {
+  e.preventDefault();
+  GS.ship.targetX = e.touches[0].clientX;
+}, { passive: false });
 
-      // Custom animation to check collisions
-      const startY = window.innerHeight - 110;
-      let y = startY;
+window.addEventListener('wheel', e => {
+  if (e.deltaY > 30 && !GS.running) startGame();
+});
 
-      const bulletInt = setInterval(() => {
-        y -= 15;
-        laser.style.top = y + 'px';
+let touchStart = 0;
+window.addEventListener('touchstart', e => { touchStart = e.touches[0].clientY; });
+window.addEventListener('touchend', e => {
+  if (!GS.running && touchStart - e.changedTouches[0].clientY > 60) startGame();
+});
 
-        if (y < -50) {
-          clearInterval(bulletInt);
-          laser.remove();
-          return;
-        }
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && GS.running) stopGame();
+  if (e.key === 'Enter' && !GS.running) startGame();
+});
 
-        // Check collision with enemies
-        enemies.forEach(en => {
-          if (!en.active) return;
-          const enemyRect = en.el.getBoundingClientRect();
-
-          if (
-            mouseX > enemyRect.left &&
-            mouseX < enemyRect.right &&
-            y > enemyRect.top &&
-            y < enemyRect.bottom
-          ) {
-            en.active = false;
-            playExplosionSound();
-            en.el.style.animation = 'explosion 0.4s forwards';
-            clearInterval(bulletInt);
-            laser.remove();
-            score += 100;
-            gameScoreEl.innerText = score;
-            setTimeout(() => en.el.style.display = 'none', 400);
-          }
-        });
-
-      }, 16);
-
-    }, 250);
-
-    // Enemy movement
-    let time = 0;
-    setInterval(() => {
-      if (!gameActive) return;
-      time += 0.05;
-      enemies.forEach((en, i) => {
-        if (!en.active) return;
-        en.y += en.speed; // move downwards
-        if (en.y > window.innerHeight) {
-          // enemy reached bottom
-          en.active = false;
-          en.el.style.display = 'none';
-          score = Math.max(0, score - 50);
-          gameScoreEl.innerText = score;
-          return;
-        }
-        const offsetX = Math.sin(time + i * 0.5) * 40;
-        en.el.style.transform = `translate(${offsetX}px, 0)`;
-        en.el.style.top = en.y + 'px';
-      });
-    }, 30);
-
-  </script>
+window.addEventListener('resize', () => {
+  if (GS.running) {
+    gameCanvas.width = window.innerWidth;
+    gameCanvas.height = window.innerHeight;
+  }
+});
+</script>
 </body>
-
 </html>
