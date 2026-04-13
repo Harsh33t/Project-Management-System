@@ -88,6 +88,8 @@ function showToast(msg, type = "info") {
 (function initStars() {
   const canvas = document.createElement("canvas");
   canvas.id = "starfield";
+  // Apply fixed positioning inline so it works even without styles.css (e.g. index.html)
+  canvas.style.cssText = "position:fixed;inset:0;top:0;left:0;width:100%;height:100%;z-index:-1;pointer-events:none;";
   document.body.prepend(canvas);
   const ctx = canvas.getContext("2d");
   let w, h, stars = [];
