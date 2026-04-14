@@ -1,13 +1,58 @@
 {
-  "projects": [],
+  "projects": [
+    {
+      "createdAt": "2026-04-14T11:03:33.791Z",
+      "attachments": [],
+      "tasks": [
+        {
+          "id": "t_1776164613855_3539",
+          "title": "QUANTUM",
+          "status": "todo",
+          "priority": "medium",
+          "assignedUsers": [],
+          "dueDate": "29 APRIL 2026",
+          "notes": "LOGGED VIA LOCAL PROTOCOL.",
+          "completed": false,
+          "comments": [],
+          "createdAt": "2026-04-14T11:03:33.855Z",
+          "tags": []
+        }
+      ],
+      "id": "p_1776164613790_625",
+      "owner": "PLAYER_1",
+      "title": "GENERAL MISSIONS",
+      "description": "AUTO-INITIALIZED",
+      "status": "active",
+      "deadline": "",
+      "tags": [],
+      "pinned": false,
+      "color": "#00ff41"
+    }
+  ],
   "activity": [
     {
+      "action": "created",
+      "userName": "PLAYER_1",
+      "projectId": "p_1776164613790_625",
+      "id": "a_1776164613855_7613",
+      "message": "Task \"QUANTUM\" added to \"GENERAL MISSIONS\"",
+      "timestamp": "2026-04-14T11:03:33.855Z"
+    },
+    {
+      "action": "created",
+      "userName": "PLAYER_1",
+      "projectId": "p_1776164613790_625",
+      "id": "a_1776164613792_2502",
+      "message": "Project \"GENERAL MISSIONS\" created",
+      "timestamp": "2026-04-14T11:03:33.792Z"
+    },
+    {
+      "action": "created",
+      "userName": "TESTUSER",
+      "projectId": "",
       "id": "a_1776067259060_997",
       "message": "New operative \"TESTUSER\" enlisted",
-      "timestamp": "2026-04-13T08:00:59.060Z",
-      "action": "created",
-      "projectId": "",
-      "userName": "TESTUSER"
+      "timestamp": "2026-04-13T08:00:59.060Z"
     },
     {
       "action": "deleted",
@@ -284,7 +329,8 @@
       "avatarColor": "#00e639",
       "role": "OPERATIVE",
       "createdAt": "2026-04-11T06:38:18.377Z",
-      "provider": "local"
+      "provider": "local",
+      "xp": 0
     },
     {
       "id": "acc_1775889847162_9666",
@@ -294,7 +340,8 @@
       "avatarColor": "#00cc31",
       "role": "OPERATIVE",
       "createdAt": "2026-04-11T06:44:07.481Z",
-      "provider": "local"
+      "provider": "local",
+      "xp": 0
     },
     {
       "id": "acc_1775889974636_7463",
@@ -304,7 +351,8 @@
       "avatarColor": "#00cc31",
       "role": "OPERATIVE",
       "createdAt": "2026-04-11T06:46:14.920Z",
-      "provider": "local"
+      "provider": "local",
+      "xp": 0
     },
     {
       "id": "acc_1775890034316_9513",
@@ -314,7 +362,8 @@
       "avatarColor": "#00ff41",
       "role": "OPERATIVE",
       "createdAt": "2026-04-11T06:47:14.541Z",
-      "provider": "local"
+      "provider": "local",
+      "xp": 0
     },
     {
       "id": "acc_1775890208901_7635",
@@ -324,7 +373,8 @@
       "avatarColor": "#33ff66",
       "role": "OPERATIVE",
       "createdAt": "2026-04-11T06:50:08.965Z",
-      "provider": "local"
+      "provider": "local",
+      "xp": 0
     },
     {
       "id": "acc_1775904840456_6428",
@@ -334,7 +384,8 @@
       "avatarColor": "#4dff88",
       "role": "OPERATIVE",
       "createdAt": "2026-04-11T10:54:00.546Z",
-      "provider": "local"
+      "provider": "local",
+      "xp": 0
     },
     {
       "id": "acc_1776067258935_184",
@@ -344,7 +395,14 @@
       "avatarColor": "#00e639",
       "role": "OPERATIVE",
       "createdAt": "2026-04-13T08:00:59.060Z",
-      "provider": "local"
+      "provider": "local",
+      "xp": 0,
+      "achievements": [
+        "pioneer"
+      ],
+      "unlockedToday": []
     }
-  ]
+  ],
+  "messages": [],
+  "teams": []
 }

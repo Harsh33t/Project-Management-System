@@ -238,32 +238,18 @@
     try {
       const res = await apiPost("/api/chat", { message: userText });
 
-      // If the AI replied
       if (res.reply) {
         let responseText = res.reply;
         let actionDone = false;
 
-        // Check if server auto-executed an action
         if (res.actionResult && res.actionResult.success) {
           actionDone = true;
-          if (res.actionResult.type === "create_task") {
-            showToast(`✓ TASK CREATED IN [${res.actionResult.projectTitle || "PROJECT"}]`);
-          } else if (res.actionResult.type === "create_project") {
-            showToast("✓ NEW PROJECT CREATED");
-          } else if (res.actionResult.type === "complete_task") {
-            const mot = motivations[Math.floor(Math.random() * motivations.length)];
-            showToast(mot);
-          } else if (res.actionResult.type === "delete_project") {
-            showToast("✓ PROJECT DELETED");
-          }
-
-          // Trigger a UI update explicitly!
+          const typeLabel = res.actionResult.type === "create_task" ? "TASK" : "PROJECT";
+          showToast(`✓ ${typeLabel} CREATED SUCCESSFULLY.`);
+          
           setTimeout(() => {
-            if (typeof load === "function") {
-              load(); // Re-render the page data if load() exists globally
-            } else {
-              window.location.reload(); // Fallback
-            }
+            if (typeof load === "function") load();
+            else window.location.reload();
           }, 800);
         }
 
@@ -271,9 +257,10 @@
       }
     } catch (err) {
       console.error("Chat API error:", err);
+      showToast("⚠ SIGNAL INTERRUPTED. FALLING BACK TO LOCAL PROTOCOL.");
     }
 
-    // Fallback: local processing if AI is unavailable
+    // Fallback: local processing if AI is unavailable or fails
     return { text: await processLocally(userText), actionDone: false };
   }
 
@@ -286,33 +273,75 @@
     const allTasks = projects.flatMap(p => (p.tasks || []).map(t => ({ ...t, projectTitle: p.title, projectId: p.id })));
     const today = new Date().toISOString().split("T")[0];
 
+    // Ultra-Robust Task Detection
+    let parsedTitle = "";
+    let parsedDate = "";
+
+    // Look for date patterns (DD/MM, DD Month, tomorrow, etc)
+    const datePattern = /(\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?|\d{1,2}(?:st|nd|rd|th)?\s+[a-z]+(?:\s+\d{2,4})?|tomorrow|next week|today)/i;
+    const dateMatch = input.match(datePattern);
+    
+    if (dateMatch && (input.includes("due") || input.includes("have") || input.includes("add") || input.includes("create"))) {
+      parsedDate = dateMatch[0];
+      // Strip intent keywords and the date to get the title
+      parsedTitle = input
+        .replace(datePattern, "")
+        .replace(/(?:i have|create|add|new|project|task|due for|due on|due|for|on|a |of )/gi, " ")
+        .trim()
+        .toUpperCase();
+
+      if (parsedTitle && parsedTitle.length > 2) {
+        let dueDate = "";
+        if (parsedDate.toLowerCase().includes("tomorrow")) {
+          const d = new Date(); d.setDate(d.getDate() + 1);
+          dueDate = d.toISOString().split("T")[0];
+        } else { dueDate = parsedDate.toUpperCase(); }
+
+        try {
+          // If no projects exist, CREATE one first
+          let targetProjectId = projects[0] ? projects[0].id : null;
+          if (!targetProjectId) {
+            const newP = await apiPost("/api/projects", { title: "GENERAL MISSIONS", status: "active", description: "AUTO-INITIALIZED" });
+            targetProjectId = newP.id;
+          }
+
+          await apiPost(`/api/projects/${targetProjectId}/tasks`, { 
+            title: parsedTitle, 
+            status: "todo", 
+            priority: "medium", 
+            dueDate, 
+            notes: "LOGGED VIA LOCAL PROTOCOL." 
+          });
+          
+          showToast(`✓ MISSION LOGGED: ${parsedTitle}`);
+          setTimeout(() => typeof load === "function" ? load() : window.location.reload(), 800);
+          return `MISSION RECOGNIZED: "${parsedTitle}"\nCOORDINATES SET FOR: ${dueDate}\nOBJECTIVE LOGGED IN [${(projects[0]||{title:"MISSIONS"}).title.toUpperCase()}].\n\nSTAY SHARP, COMMANDER.`;
+        } catch (e) {
+          console.error(e);
+          return "MISSION LOGGING FAILED. DATABASE UNAVAILABLE.";
+        }
+      }
+    }
+
     if (/how many (tasks?|missions?)/.test(input) || /task count|my tasks/i.test(input)) {
-      const total = allTasks.length;
-      const overdue = allTasks.filter(t => t.dueDate && t.dueDate < today && t.status !== "done" && !t.completed).length;
-      const inProgress = allTasks.filter(t => t.status === "in-progress").length;
-      return `SCANNING DATABASES...\n${total} MISSIONS DETECTED.\n${overdue} OVERDUE | ${inProgress} IN PROGRESS`;
+        const total = allTasks.length;
+        const overdue = allTasks.filter(t => t.dueDate && t.dueDate < today && t.status !== "done" && !t.completed).length;
+        return `SCANNING DATABASES...\n${total} MISSIONS DETECTED.\n${overdue} OVERDUE.`;
     }
 
     if (/due today|today.?s (tasks?|missions?)|what.?s due/.test(input)) {
-      const dueTasks = allTasks.filter(t => t.dueDate === today && t.status !== "done" && !t.completed);
-      if (dueTasks.length === 0) return "NO MISSIONS DUE TODAY. STAND BY, COMMANDER.";
-      let reply = `${dueTasks.length} MISSION(S) DUE TODAY:\n`;
-      dueTasks.forEach(t => { reply += `▸ "${t.title}" IN [${t.projectTitle}]\n`; });
-      return reply.trim();
+        const dueTasks = allTasks.filter(t => t.dueDate === today && t.status !== "done" && !t.completed);
+        if (dueTasks.length === 0) return "NO MISSIONS DUE TODAY.";
+        let reply = `${dueTasks.length} MISSION(S) DUE TODAY:\n`;
+        dueTasks.forEach(t => { reply += `▸ "${t.title}"\n`; });
+        return reply.trim();
     }
 
-    if (/overdue|past due|late (tasks?|missions?|projects?)/.test(input)) {
-      const overdue = allTasks.filter(t => t.dueDate && t.dueDate < today && t.status !== "done" && !t.completed);
-      if (overdue.length === 0) return "NO OVERDUE MISSIONS. ALL CLEAR, COMMANDER.";
-      let reply = `⚠ ${overdue.length} OVERDUE MISSION(S):\n`;
-      overdue.forEach(t => {
-        const daysOver = Math.floor((Date.now() - new Date(t.dueDate).getTime()) / 86400000);
-        reply += `▸ "${t.title}" — ${daysOver}D OVERDUE [${t.projectTitle}]\n`;
-      });
-      return reply.trim();
+    if (input.includes("hello") || input.includes("hi ") || input === "hi") {
+        return `SYSTEM ONLINE. WELCOME BACK, ${getUsername()}.`;
     }
 
-    return `COMMAND NOT RECOGNIZED.\n\nTRY NATURAL LANGUAGE LIKE:\n▸ "I HAVE EXAM ON 26/4"\n▸ "ADD MEETING TOMORROW AT 3PM"\n▸ "WHAT'S DUE TODAY?"\n▸ "SHOW OVERDUE TASKS"\n▸ "CREATE PROJECT FINALS"`;
+    return `COMMAND NOT RECOGNIZED.\n\nCOMM LINK WEAK. PLEASE USE EXPLICIT DIRECTIVES:\n▸ "CREATE MISSION [NAME] DUE [DATE]"\n▸ "HOW MANY TASKS?"\n▸ "WHAT'S DUE TODAY?"`;
   }
 
   /* ── Send Message ────────────────────────────────── */

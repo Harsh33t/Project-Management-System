@@ -275,8 +275,15 @@ function checkAchievements(account, db) {
 }
 
 function getActor(req, db) {
+  // Try JWT first
+  const auth = req.header("Authorization");
+  if (auth && auth.startsWith("Bearer ")) {
+    const payload = verifyJWT(auth.slice(7));
+    if (payload && payload.username) return payload.username;
+  }
+  // Try custom header
   const byName = String(req.header("x-user") || "PLAYER_1").trim();
-  const found = (db.users || []).find((u) => u.name.toLowerCase() === byName.toLowerCase());
+  const found = (db.users || []).find((u) => (u.name || "").toLowerCase() === byName.toLowerCase());
   return found ? found.name : "PLAYER_1";
 }
 
@@ -541,7 +548,69 @@ app.post("/api/chat", async (req, res) => {
     }).join("\n\n");
 
   if (!GROQ_API_KEY) {
-    return res.status(200).json({ reply: null });
+    // BACKEND LOCAL PROTOCOL (NLP Fallback)
+    const input = message.toLowerCase();
+    const datePattern = /(\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?|\d{1,2}(?:st|nd|rd|th)?\s+[a-z]+(?:\s+\d{2,4})?|tomorrow|next week|today)/i;
+    const dateMatch = input.match(datePattern);
+    
+    if (dateMatch && (input.includes("due") || input.includes("have") || input.includes("add") || input.includes("create"))) {
+      const parsedDate = dateMatch[0];
+      const parsedTitle = message
+        .replace(new RegExp(datePattern.source, 'gi'), "")
+        .replace(/(?:i have|create|add|new|project|task|due for|due on|due|for|on|a |of )/gi, " ")
+        .trim()
+        .toUpperCase();
+
+      if (parsedTitle.length > 2) {
+        // Enforce project existence (mirror AI logic)
+        let project = db.projects.find(p => !p.owner || p.owner === userName);
+        if (!project) {
+          project = {
+            id: id("p"),
+            owner: userName,
+            title: "MISSIONS",
+            description: "INITIALIZED VIA LOCAL PROTOCOL",
+            status: "active",
+            deadline: "",
+            createdAt: new Date().toISOString(),
+            tasks: [],
+            attachments: []
+          };
+          db.projects.unshift(project);
+        }
+
+        const newTask = {
+          id: id("t"),
+          title: parsedTitle,
+          status: "todo",
+          priority: "medium",
+          dueDate: parsedDate,
+          notes: "LOGGED VIA BACKEND LOCAL PROTOCOL.",
+          createdAt: new Date().toISOString(),
+          completed: false
+        };
+        project.tasks = project.tasks || [];
+        project.tasks.unshift(newTask);
+        logActivity(db, `Task "${newTask.title}" initialized via Local Protocol`, {
+          action: "created",
+          projectId: project.id,
+          userName: "NEXUS BOT"
+        });
+        writeDb(db);
+
+        return res.status(200).json({ 
+          reply: `MISSION RECOGNIZED: "${parsedTitle}"\nCOORDINATES SET FOR: ${parsedDate}\nOBJECTIVE LOGGED IN [${project.title.toUpperCase()}].`,
+          actionResult: { success: true, type: "create_task", projectTitle: project.title }
+        });
+      }
+    }
+
+    const fallbacks = [
+      "AI CORE OFFLINE. STANDING BY FOR MISSION DIRECTIVES.",
+      "COMM LINK WEAK. PLEASE USE EXPLICIT FORMAT: 'CREATE TASK [NAME] DUE [DATE]'",
+      "LOCAL PROTOCOL ACTIVE. AWAITING YOUR NEXT MOVE."
+    ];
+    return res.status(200).json({ reply: fallbacks[Math.floor(Math.random() * fallbacks.length)] });
   }
 
   try {

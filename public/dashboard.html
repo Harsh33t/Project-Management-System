@@ -34,15 +34,15 @@
 
     <main class="page-root">
       <div class="content-wrap">
-        <section class="panel" style="border-color: var(--c); background: rgba(0,217,255,0.05); margin-bottom: 30px;">
-          <h2 class="page-title" style="color: var(--c);">▸ PILOT PROFILE</h2>
+        <section class="panel" style="margin-bottom: 30px;">
+          <h2 class="page-title">▸ PILOT PROFILE</h2>
           <div id="pilotProfile" style="display: flex; gap: 20px; align-items: center; min-height: 80px;">
             <div style="flex:1">
                <div id="pilotRank" style="font-size: 1.4rem; color: #fff; text-shadow: 0 0 10px var(--c);">CADET</div>
                <div style="color: var(--c); font-size: 0.8rem;">TRAINING LEVEL: <span id="pilotLevel">1</span></div>
             </div>
             <div style="flex: 2;">
-               <div style="display:flex; justify-content:space-between; font-size:0.6rem; margin-bottom: 5px; font-family:'Press Start 2P'; color:var(--c);"><span>EXPERIENCE POINTS (PX)</span><span id="xpText">0 / 100</span></div>
+             <div style="display:flex; justify-content:space-between; font-size:0.6rem; margin-bottom: 5px; font-family:'Press Start 2P'; color:var(--c);"><span>EXPERIENCE POINTS (PX)</span><span id="xpText">0 / 100</span></div>
                <div class="health-bar-container" style="height: 12px; border-color: var(--c);"><div id="xpBar" class="health-bar-fill" style="width: 0%; background: var(--c); box-shadow: 0 0 10px var(--c);"></div></div>
             </div>
           </div>
@@ -53,9 +53,9 @@
           <div id="stats" class="stats-grid"></div>
         </section>
 
-        <section class="panel" style="border-color: var(--m); background: rgba(255,79,216,0.05); text-align: center;">
+        <section class="panel" style="text-align: center;">
           <h2 class="page-title" style="color: var(--m);">▸ HYPER-SLEEP CYCLE</h2>
-          <div id="pomoTimer" style="font-size: 3rem; font-family:'VT323'; color: #fff; text-shadow: 0 0 10px var(--m);">25:00</div>
+          <div id="pomoTimer" style="font-size: 3.5rem; font-weight: 600; color: #fff; text-shadow: 0 0 20px var(--m);">25:00</div>
           <div style="margin-top: 10px;">
             <button id="pomoStart" style="border-color:var(--m); color:var(--m);">ENGAGE</button>
             <button id="pomoReset" style="border-color:var(--m); color:var(--m);">RESET</button>

@@ -136,15 +136,15 @@ function renderProjects() {
       return `<article class="project-card">
         <div class="folder-tab">MISSION: ${esc(p.title)}</div>
         <div class="project-header-row">
-          <div><span class="project-id-tag">ID_${p.id.slice(-4).toUpperCase()}</span> <span class="project-title" style="font-size:1.2rem; filter:drop-shadow(var(--g-glow));">${esc(p.title)}</span></div>
+          <div><span class="project-id-tag">ID_${p.id.slice(-4).toUpperCase()}</span> <span class="project-title">${esc(p.title)}</span></div>
           <div class="badge-row">${statusBadge(p)} <span class="badge" style="border-color:var(--y); color:var(--y);">${esc(p.deadline || "INF")}</span></div>
         </div>
 
-        <div style="padding: 0 20px;">
-          <p class="project-desc" style="font-family:'VT323'; font-size:1.2rem; color:rgba(0,255,65,0.7); margin-top:15px;">${esc(p.description || "NO MISSION OBJECTIVE DEFINED.")}</p>
+        <div style="padding: 0 24px;">
+          <p class="project-desc" style="font-family:'VT323'; font-size:1.2rem; margin-top:20px;">${esc(p.description || "NO MISSION OBJECTIVE DEFINED.")}</p>
           
-          <div style="margin: 20px 0;">
-             <div style="display:flex; justify-content:space-between; font-family:'Press Start 2P'; font-size:0.6rem; color:var(--g);">
+          <div style="margin: 24px 0;">
+             <div style="display:flex; justify-content:space-between; font-family:'Press Start 2P'; font-size:0.6rem; color:var(--g); margin-bottom: 8px;">
                <span>MISSION PROGRESS</span>
                <span>${pg}%</span>
              </div>
@@ -155,40 +155,40 @@ function renderProjects() {
         <div id="briefing_${p.id}" class="briefing-box" style="display:none"></div>
 
         <div class="combat-log">
-          <div style="font-family:'Press Start 2P'; font-size:0.6rem; color:var(--y); margin-bottom:10px; border-bottom:1px solid var(--y); padding-bottom:4px;">[ COMBAT_LOG ]</div>
-          ${taskEntries || `<div class="empty-state" style="font-family:'VT323';">[ NO OPERATIONS LOGGED ]</div>`}
+          <div style="font-family:'Press Start 2P'; font-size:0.6rem; color:var(--y); margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:8px; letter-spacing:1px;">[ COMBAT_LOG ]</div>
+          ${taskEntries || `<div class="empty-state">NO OPERATIONS LOGGED.</div>`}
         </div>
 
-        <div style="padding: 10px 20px;">
-          <button data-task-toggle="${p.id}" style="width:100%; padding:10px; border:1px dashed var(--g); background:rgba(0,255,65,0.05); color:var(--g); font-family:inherit; cursor:pointer; font-size:0.75rem;">+ INITIALIZE NEW OPERATION</button>
+        <div style="padding: 10px 24px;">
+          <button data-task-toggle="${p.id}" style="width:100%; border:1px dashed rgba(255,255,255,0.1); background:rgba(255,255,255,0.02);">+ INITIALIZE NEW OPERATION</button>
         </div>
 
-        <form id="task_form_${p.id}" class="task-form-body" style="display:none; padding:15px 20px; background:rgba(0,0,0,0.5); border:1px solid var(--g-dim);" data-task-form="${p.id}">
-          <div class="task-row-1">
+        <form id="task_form_${p.id}" class="task-form-body" style="display:none; padding:20px 24px; background:rgba(255,255,255,0.03); border-top:1px solid rgba(255,255,255,0.05);" data-task-form="${p.id}">
+          <div class="task-row-1" style="display:grid; grid-template-columns:1fr 150px; gap:12px; margin-bottom:12px;">
             <input name="title" placeholder="OPERATION CODENAME" required />
             <select name="priority"><option value="low">STABLE</option><option value="medium">HIGH</option><option value="high">CRITICAL</option></select>
           </div>
-          <div class="task-row-2">
+          <div class="task-row-2" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
             <input type="date" name="dueDate" />
             ${assigneeToggles(p.id)}
           </div>
-          <div class="task-row-3">
-            <textarea name="notes" rows="2" placeholder="SITREP DETAILS"></textarea>
-            <button class="right">START OP</button>
+          <div class="task-row-3" style="display:grid; gap:12px;">
+            <textarea name="notes" rows="3" placeholder="SITREP DETAILS..."></textarea>
+            <button class="right" style="background:var(--g); color:#000; border:none;">START MISSION</button>
           </div>
         </form>
 
-        <div class="action-row" style="padding:15px 20px; border-top:1px solid var(--g-dim); background:rgba(0,0,0,0.2); display:flex; flex-wrap:wrap; gap:10px;">
-          <button style="border-color:var(--c); color:var(--c);" onclick="requestBriefing('${p.id}')">REQUEST BRIEFING</button>
-          <button data-edit-project="${p.id}">MODIFY</button>
-          <button class="btn-danger" data-delete-project="${p.id}">ABORT</button>
-          <button style="font-size:0.6rem;" data-export-project="${p.id}:json">EXP_JSON</button>
-          <button style="font-size:0.6rem;" data-export-project="${p.id}:csv">EXP_CSV</button>
+        <div class="action-row" style="padding:20px 24px; border-top:1px solid rgba(255,255,255,0.05); background:rgba(255,255,255,0.01); display:flex; flex-wrap:wrap; gap:12px;">
+          <button style="border-color:var(--c); color:var(--c); background:transparent;" onclick="requestBriefing('${p.id}')">REQUEST BRIEFING</button>
+          <button style="background:transparent; border-color:rgba(255,255,255,0.2);" data-edit-project="${p.id}">MODIFY</button>
+          <button class="btn-danger" style="background:transparent;" data-delete-project="${p.id}">ABORT</button>
+          <button style="font-size:0.75rem; background:transparent; border-color:rgba(255,255,255,0.1);" data-export-project="${p.id}:json">EXP_JSON</button>
+          <button style="font-size:0.75rem; background:transparent; border-color:rgba(255,255,255,0.1);" data-export-project="${p.id}:csv">EXP_CSV</button>
           
-          <form class="file-row" data-upload-form="${p.id}" style="margin-left:auto; display:flex; gap:5px; border:none; padding:0;">
+          <form class="file-row" data-upload-form="${p.id}" style="margin-left:auto; display:flex; gap:8px; border:none; padding:0; background:transparent;">
              <input class="file-input-hidden" id="file_${p.id}" name="file" type="file" required />
-             <label class="btn" style="padding:4px 8px; font-size:0.6rem;" for="file_${p.id}">FILE</label>
-             <button style="padding:4px 8px; font-size:0.6rem;">UPLOAD</button>
+             <label class="btn" style="padding:10px 16px; font-size:0.8rem; background:transparent; border-color:rgba(255,255,255,0.1);" for="file_${p.id}">ATTACH FILE</label>
+             <button style="padding:10px 16px; font-size:0.8rem; background:var(--c); color:#000; border:none;">UPLOAD</button>
           </form>
         </div>
 
@@ -292,18 +292,27 @@ document.addEventListener("click", async (e) => {
     return load();
   }
   if (t.dataset.deleteProject) {
-    await api(`/api/projects/${t.dataset.deleteProject}`, { method: "DELETE" });
-    return load();
+    if (!confirm("ARE YOU SURE YOU WANT TO TERMINATE THIS MISSION? ALL DATA WILL BE WIPED.")) return;
+    try {
+      await api(`/api/projects/${t.dataset.deleteProject}`, { method: "DELETE" });
+      showToast("MISSION TERMINATED.", "success");
+      return load();
+    } catch (err) {
+      showToast("COMM LINK ERROR: UNABLE TO PURGE.", "error");
+    }
   }
+
   if (t.dataset.doneTask) {
     const [pid, tid] = t.dataset.doneTask.split(":");
     await api(`/api/projects/${pid}/tasks/${tid}`, { method: "PUT", body: JSON.stringify({ completed: true, status: "done" }) });
     showToast("OPERATION CLEAR. XP AWARDED.", "success");
     return load();
   }
+
   if (t.dataset.deleteTask) {
     const [pid, tid] = t.dataset.deleteTask.split(":");
     await api(`/api/projects/${pid}/tasks/${tid}`, { method: "DELETE" });
+    showToast("OPERATION PURGED.", "success");
     return load();
   }
 });
@@ -320,6 +329,7 @@ document.addEventListener("change", (e) => {
   }
   renderProjects();
 });
+
 document.addEventListener("input", (e) => {
   if (e.target.id === "searchProject") {
     st.q = e.target.value.trim();
@@ -334,6 +344,7 @@ document.addEventListener("submit", async (e) => {
     const pid = t.dataset.uploadForm;
     const fd = new FormData(t);
     await fetch(`/api/projects/${pid}/files`, { method: "POST", headers: { "x-user": st.user }, body: fd });
+    showToast("FILE UPLOADED TO MISSION DIRECTORY.", "success");
     return load();
   }
   if (t.matches("[data-task-form]")) {
@@ -351,23 +362,40 @@ document.addEventListener("submit", async (e) => {
         assignedUsers
       })
     });
+    showToast("NEW OPERATION ASSIGNED.", "success");
     return load();
   }
 });
 
 $("#createProjectBtn").addEventListener("click", async () => {
-  const payload = {
-    title: $("#projectTitle").value.trim(),
-    status: $("#projectStatus").value,
-    description: $("#projectDescription").value.trim(),
-    deadline: $("#projectDeadline").value
-  };
-  if (!payload.title) return;
-  await api("/api/projects", { method: "POST", body: JSON.stringify(payload) });
-  $("#projectTitle").value = "";
-  $("#projectDescription").value = "";
-  $("#projectDeadline").value = "";
-  await load();
+    const title = $("#projectTitle").value.trim();
+    const status = $("#projectStatus").value;
+    const description = $("#projectDescription").value.trim();
+    const deadline = $("#projectDeadline").value;
+  
+    if (!title) {
+      showToast("MISSION CODENAME REQUIRED.", "error");
+      return;
+    }
+  
+    try {
+      await api("/api/projects", { 
+        method: "POST", 
+        body: JSON.stringify({ title, status, description, deadline }) 
+      });
+      
+      $("#projectTitle").value = "";
+      $("#projectDescription").value = "";
+      $("#projectDeadline").value = "";
+      
+      $("#createBody").style.display = "none";
+      $("#createToggleSymbol").textContent = "[+]";
+      
+      showToast("MISSION LOGGED SUCCESSFULLY.", "success");
+      await load();
+    } catch (err) {
+      showToast("INITIALIZATION FAILED.", "error");
+    }
 });
 $("#genCodenameBtn").addEventListener("click", () => {
   $("#projectTitle").value = generateCodename();

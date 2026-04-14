@@ -1,23 +1,23 @@
 :root {
-  --bg: #000;
-  --g: #00ff41;
-  --g-dim: #003b0f;
-  --c: #00d9ff;
-  --y: #ffd700;
-  --m: #ff4fd8;
-  --r: #ff3d3d;
-  --g-glow: 0 0 10px rgba(0, 255, 65, 0.5);
-  --y-glow: 0 0 10px rgba(255, 215, 0, 0.4);
+  --bg: #09090b;
+  --bg-panel: rgba(24, 24, 27, 0.7);
+  --g: #10b981;
+  --g-dim: #064e3b;
+  --c: #38bdf8;
+  --y: #f59e0b;
+  --m: #f472b6;
+  --r: #ef4444;
+  --g-glow: 0 0 15px rgba(16, 185, 129, 0.3);
+  --y-glow: 0 0 15px rgba(245, 158, 11, 0.3);
 }
 
-/* ── THEME OVERRIDES ─────────────────────────────────── */
-[data-theme="cyan"]    { --g:#00d9ff; --g-dim:#003d4d; --g-glow:0 0 10px rgba(0,217,255,.5); }
-[data-theme="magenta"] { --g:#ff4fd8; --g-dim:#4d0040; --g-glow:0 0 10px rgba(255,79,216,.5); }
-[data-theme="gold"]    { --g:#ffd700; --g-dim:#4d3f00; --g-glow:0 0 10px rgba(255,215,0,.5);  }
-[data-theme="volcanic"]{ --g:#ff6633; --g-dim:#4d1a00; --g-glow:0 0 10px rgba(255,102,51,.5); }
-[data-theme="void"]    { --g:#aa00ff; --g-dim:#2a0044; --g-glow:0 0 10px rgba(170,0,255,.5);  }
+[data-theme="cyan"]    { --g:#38bdf8; --g-dim:#0c4a6e; --g-glow:0 0 15px rgba(56,189,248,.3); }
+[data-theme="magenta"] { --g:#f472b6; --g-dim:#831843; --g-glow:0 0 15px rgba(244,114,182,.3); }
+[data-theme="gold"]    { --g:#f59e0b; --g-dim:#78350f; --g-glow:0 0 15px rgba(245,158,11,.3);  }
+[data-theme="volcanic"]{ --g:#f97316; --g-dim:#7c2d12; --g-glow:0 0 15px rgba(249,115,22,.3); }
+[data-theme="void"]    { --g:#a855f7; --g-dim:rgba(168,85,247,0.2); --g-glow:0 0 15px rgba(168,85,247,.4);  }
 
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Press+Start+2P&family=VT323&display=swap');
 
 * {
   box-sizing: border-box;
@@ -28,19 +28,20 @@ body {
   margin: 0;
   min-height: 100%;
   background: var(--bg);
-  color: var(--g);
-  font-family: "VT323", "Press Start 2P", monospace;
-  font-size: 1rem;
+  color: #f4f4f5;
+  font-family: "VT323", monospace;
+  font-size: 1.2rem;
 }
 
-h1, h2, h3, .logo-wrapper, .nav-link {
-  font-family: "Press Start 2P", monospace;
+h1, h2, h3, .logo-wrapper, .nav-link, .folder-tab, .project-title {
+  font-family: "Press Start 2P", cursive;
+  font-weight: 400;
+  letter-spacing: 1px;
 }
 
 body {
   position: relative;
-  animation: pageFlicker .2s ease-out;
-  background: radial-gradient(circle at center, #001 0%, #000 100%);
+  background: radial-gradient(circle at center, #18181b 0%, var(--bg) 100%);
   overflow-x: hidden;
 }
 
@@ -106,24 +107,29 @@ body::after {
 
 .page-root {
   min-height: 100vh;
-  padding: 40px;
+  padding: 40px 20px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
 }
 
 .content-wrap {
-  width: min(900px, 100%);
+  max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 32px;
+  box-sizing: border-box;
 }
 
 .navbar {
-  border-bottom: 1px solid var(--g);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
   width: 100%;
-  background: linear-gradient(90deg, rgba(0, 217, 255, .08), rgba(0, 255, 65, .06), rgba(255, 79, 216, .08));
-  position: relative;
+  background: rgba(9, 9, 11, 0.8);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
 .navbar-inner {
@@ -137,14 +143,7 @@ body::after {
 }
 
 .navbar::after {
-  content: "SCANNINNG...";
-  position: absolute;
-  top: 100%;
-  left: 20px;
-  font-size: 0.6rem;
-  color: var(--g);
-  animation: blink 0.8s step-end infinite;
-  letter-spacing: 2px;
+  display: none;
 }
 
 .logo {
@@ -193,17 +192,18 @@ body::after {
 }
 
 .page-title {
-  font-size: 1.2rem;
-  letter-spacing: .15em;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
   color: var(--g);
   margin: 0;
   text-transform: uppercase;
 }
 
 .section-label {
-  font-size: .75rem;
-  opacity: .6;
-  letter-spacing: .1em;
+  font-size: .85rem;
+  opacity: .7;
+  letter-spacing: 1px;
   text-transform: uppercase;
   margin: 0;
 }
@@ -216,39 +216,31 @@ body::after {
 }
 
 .blink {
-  animation: blink 1s step-end infinite;
+  animation: blink 1.5s ease-in-out infinite;
 }
 
 .panel {
-  background: rgba(0, 0, 0, 0.85);
-  border: 2px solid var(--g-dim);
+  background: var(--bg-panel);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(12px);
   padding: 24px;
   position: relative;
-  box-shadow: inset 0 0 20px rgba(0, 255, 65, 0.05);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   transition: border-color 0.3s ease;
 }
 
 .panel:hover {
-  border-color: var(--g);
+  border-color: rgba(255,255,255,0.15);
 }
 
-.panel::before {
-  content: "";
-  position: absolute;
-  top: -2px; left: -2px; width: 20px; height: 20px;
-  border-top: 4px solid var(--g); border-left: 4px solid var(--g);
-}
-
-.panel::after {
-  content: "";
-  position: absolute;
-  bottom: -2px; right: -2px; width: 20px; height: 20px;
-  border-bottom: 4px solid var(--g); border-right: 4px solid var(--g);
+.panel::before, .panel::after {
+  display: none;
 }
 
 .divider {
   border: none;
-  border-top: 1px solid rgba(0, 255, 65, .45);
+  border-top: 1px solid rgba(255,255,255,0.05);
   margin: 0;
 }
 
@@ -257,31 +249,32 @@ textarea,
 select,
 button {
   font: inherit;
-  text-transform: uppercase;
-  border-radius: 0;
+  border-radius: 12px;
 }
 
 input,
 textarea,
 select {
-  background: #000;
-  border: 1px solid var(--g);
-  color: var(--g);
-  padding: 8px 12px;
-  min-height: 36px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  padding: 10px 16px;
+  min-height: 44px;
+  transition: all 0.2s ease;
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: rgba(0, 255, 65, .4);
+  color: rgba(255, 255, 255, 0.3);
 }
 
 input:focus,
 textarea:focus,
 select:focus {
   outline: none;
+  background: rgba(255, 255, 255, 0.06);
   border-color: var(--c);
-  box-shadow: 0 0 0 1px rgba(0, 217, 255, .4);
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.1);
 }
 
 select {
@@ -300,19 +293,31 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 button,
 .btn {
-  border: 1px solid var(--g);
-  background: #000;
-  color: var(--g);
-  padding: 8px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  padding: 10px 24px;
   text-decoration: none;
-  transition: .1s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 button:hover,
 .btn:hover {
-  background: var(--g);
-  color: #000;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+button:active,
+.btn:active {
+  transform: translateY(0);
 }
 
 .btn-danger {
@@ -415,16 +420,18 @@ button:hover,
 }
 
 .empty-state {
-  border: 1px dashed rgba(0, 255, 65, .45);
-  padding: 24px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  padding: 40px;
   text-align: center;
-  color: rgba(0, 255, 65, .7);
+  color: #a1a1aa;
+  border-radius: 12px;
 }
 
 .controls-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  gap: 12px;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 16px;
+  align-items: center;
 }
 
 .project-create-body {
@@ -451,44 +458,59 @@ button:hover,
 
 /* Mission Folder Styling for Projects */
 .project-card {
-  background: #0a0a0a;
-  border: 1px solid var(--g-dim);
+  background: var(--bg-panel);
+  border: 1px solid rgba(255,255,255,0.05);
   margin-bottom: 32px;
   padding: 0;
   overflow: hidden;
   position: relative;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.project-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255,255,255,0.1);
 }
 
 .folder-tab {
   display: inline-block;
-  background: var(--g-dim);
+  background: var(--g);
   color: #000;
-  padding: 4px 16px;
-  font-family: "Press Start 2P";
-  font-size: 0.6rem;
-  clip-path: polygon(0 0, 85% 0, 100% 100%, 0% 100%);
+  padding: 6px 20px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  border-bottom-right-radius: 12px;
 }
 
 .project-header-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--g-dim); background: rgba(0,255,65,0.02);
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.01);
 }
 
-.project-id-tag { color: var(--c); font-size: 0.8rem; margin-right: 10px; }
+.project-id-tag { 
+  color: var(--c); 
+  font-size: 0.85rem; 
+  opacity: 0.6;
+  margin-right: 12px; 
+}
 
 .project-title {
-  color: var(--c);
+  color: #fff;
   margin: 0;
-  text-shadow: 0 0 8px rgba(0, 217, 255, .2);
+  font-size: 1.25rem;
 }
 
 .project-desc {
-  color: rgba(0, 255, 65, .72);
+  color: #a1a1aa;
   margin: 0;
-  font-size: .8rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 .badge-row {
@@ -499,29 +521,34 @@ button:hover,
 
 .badge {
   border: 1px solid;
-  padding: 4px 8px;
-  font-size: .72rem;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  border-radius: 9999px;
+  font-weight: 500;
 }
 
 .badge-planned {
-  border-color: var(--y);
+  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.1);
   color: var(--y);
 }
 
 .badge-active {
-  border-color: var(--g);
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.1);
   color: var(--g);
 }
 
 .badge-completed {
-  border-color: var(--c);
+  border-color: rgba(56, 189, 248, 0.3);
+  background: rgba(56, 189, 248, 0.1);
   color: var(--c);
 }
 
 .badge-overdue {
-  border-color: var(--r);
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.1);
   color: var(--r);
-  animation: blink 1s step-end infinite;
 }
 
 /* AI Briefing Box */
@@ -538,35 +565,60 @@ button:hover,
 .briefing-box b { font-family: "Press Start 2P"; font-size: 0.6rem; display: block; margin-bottom: 6px; }
 
 /* Combat Log Tasks */
-.combat-log { margin: 15px 20px; }
-.log-entry {
-  display: flex; gap: 12px; align-items: center;
-  padding: 8px; border-bottom: 1px solid #111;
-  transition: background 0.2s; cursor: pointer;
+.combat-log { 
+    margin: 20px 24px; 
 }
-.log-entry:hover { background: rgba(0,255,65,0.05); }
+.log-entry {
+  display: flex; 
+  flex-direction: column;
+  gap: 12px; 
+  padding: 16px; 
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.02);
+  margin-bottom: 12px;
+  transition: border-color 0.2s, background 0.2s;
+}
+.log-entry:hover { 
+    border-color: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04); 
+}
 
-.log-status-bullet { width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 5px currentColor; }
+.log-status-bullet { 
+    width: 8px; 
+    height: 8px; 
+    border-radius: 50%; 
+    box-shadow: 0 0 10px currentColor; 
+}
 .status-todo { color: var(--y); }
 .status-in-progress { color: var(--c); }
 .status-done { color: var(--g); }
 
 .log-priority {
-  font-size: 0.7rem; font-weight: bold; width: 80px; text-align: center;
-  border: 1px solid currentColor; padding: 2px 0;
+  font-size: 0.7rem; 
+  font-weight: 600; 
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.05);
+  text-transform: uppercase;
 }
-.pri-high { color: var(--r); animation: blink 1s step-end infinite; }
+.pri-high { color: var(--r); }
 .pri-medium { color: var(--y); }
 .pri-low { color: var(--c); }
 
 /* Mission Progress Health Bar */
 .health-bar-container {
-  height: 10px; background: #222; border: 1px solid #444; overflow: hidden; margin-top: 10px;
+  height: 8px; 
+  background: rgba(255,255,255,0.05); 
+  border-radius: 4px;
+  overflow: hidden; 
+  margin-top: 12px;
 }
 .health-bar-fill {
-  height: 100%; background: linear-gradient(90deg, #ff0000, #00ff41);
-  box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
-  transition: width 0.5s ease;
+  height: 100%; 
+  background: var(--g);
+  box-shadow: var(--g-glow);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .file-row {

@@ -59,12 +59,12 @@ async function api(url) {
     document.getElementById("bars").innerHTML = rows
       .map(([label, count, cls]) => {
         const pct = Math.round((count / total) * 100);
-        return `<div class="status-row" style="margin-bottom:15px;">
-          <div style="display:flex; justify-content:space-between; font-family:'Press Start 2P'; font-size:0.6rem; color:var(--g); margin-bottom:5px;">
+        return `<div class="status-row" style="margin-bottom:24px;">
+          <div style="display:flex; justify-content:space-between; font-family:'Press Start 2P'; font-size:0.6rem; color:var(--g); margin-bottom:8px;">
             <span>${label}</span>
-            <span style="font-family:'VT323'; font-size:1.2rem;">${count}</span>
+            <span style="font-family:'VT323'; font-size:1.2rem; opacity:0.6;">${count}</span>
           </div>
-          <div class="health-bar-container" style="height:12px;"><div class="health-bar-fill" style="width:${pct}%; filter:hue-rotate(${cls === 'todo-fill' ? '0deg' : cls === 'progress-fill' ? '180deg' : '90deg'});"></div></div>
+          <div class="health-bar-container"><div class="health-bar-fill" style="width:${pct}%;"></div></div>
         </div>`;
       })
       .join("");
