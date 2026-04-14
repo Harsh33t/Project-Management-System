@@ -27,31 +27,10 @@
   let idleTimer = null;
 
   /* ── Pink Space Invader SVG ──────────────────────── */
-  const INVADER_SVG = `<svg viewBox="0 0 15 10" fill="#ff0055" style="width:100%;height:100%;filter:drop-shadow(0 0 6px rgba(255,0,85,0.6))">
-    <rect x="4" y="0" width="7" height="1"></rect>
-    <rect x="3" y="1" width="9" height="1"></rect>
-    <rect x="2" y="2" width="11" height="1"></rect>
-    <rect x="2" y="3" width="2" height="1"></rect>
-    <rect x="5" y="3" width="5" height="1"></rect>
-    <rect x="11" y="3" width="2" height="1"></rect>
-    <rect x="0" y="4" width="15" height="1"></rect>
-    <rect x="2" y="5" width="2" height="1"></rect>
-    <rect x="5" y="5" width="5" height="1"></rect>
-    <rect x="11" y="5" width="2" height="1"></rect>
-  </svg>`;
+  const BOT_ICON_URL = "/bot_logo.png";
+  const INVADER_SVG = `<img src="${BOT_ICON_URL}" style="width:100%;height:100%;filter:drop-shadow(0 0 8px #ff0055);object-fit:contain;">`;
 
-  const INVADER_ICON_SMALL = `<svg viewBox="0 0 15 10" fill="#ff0055" style="width:16px;height:11px">
-    <rect x="4" y="0" width="7" height="1"></rect>
-    <rect x="3" y="1" width="9" height="1"></rect>
-    <rect x="2" y="2" width="11" height="1"></rect>
-    <rect x="2" y="3" width="2" height="1"></rect>
-    <rect x="5" y="3" width="5" height="1"></rect>
-    <rect x="11" y="3" width="2" height="1"></rect>
-    <rect x="0" y="4" width="15" height="1"></rect>
-    <rect x="2" y="5" width="2" height="1"></rect>
-    <rect x="5" y="5" width="5" height="1"></rect>
-    <rect x="11" y="5" width="2" height="1"></rect>
-  </svg>`;
+  const INVADER_ICON_SMALL = `<img src="${BOT_ICON_URL}" style="width:20px;height:auto;filter:drop-shadow(0 0 5px #ff0055);transform:translateY(2px)">`;
 
   /* ── Inject HTML ─────────────────────────────────── */
   function injectChatHTML() {
