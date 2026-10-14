@@ -6,7 +6,7 @@
 
 ---
 
-## 🛰️ Mission Core Features
+##  Mission Core Features
 
 ### 📊 Tactical Dashboard
 *   **Operational Metrics:** Real-time visualization of mission counts, active operations, and hull damage (overdue tasks).
